@@ -1,5 +1,7 @@
 # agent-rules
 
+> 中文版见 [README.zh.md](./README.zh.md)。修改 README 时请同步更新两个版本。
+
 Personal agent rules — cross-machine, cross-tool constraints for Claude Code (and other AGENTS.md-aware tools).
 
 ## What's inside
@@ -57,6 +59,7 @@ install.sh only installs **rules**. These are not included — set them up indep
 ```
 agent-rules/
 ├── AGENTS.md            # entry, loaded every session
+├── CLAUDE.md -> AGENTS.md  # symlink, stays in sync with AGENTS.md
 ├── common/              # general engineering standards
 │   ├── code-review.md
 │   ├── dev-workflow.md
@@ -67,7 +70,8 @@ agent-rules/
 │   ├── go.md  python.md  rust.md  shell.md  sql.md
 │   ├── typescript.md  react.md  web.md
 │   └── gopls-upstream.md  github.md
-└── install.sh
+├── install.sh
+└── README.zh.md         # 中文说明
 ```
 
 ## Loading mechanism
