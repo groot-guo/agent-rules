@@ -1,3 +1,9 @@
+---
+paths:
+  - gopls/**
+  - "**/gopls/**"
+---
+
 # gopls / Go Upstream Contribution Rules
 
 > Auto-loaded for `gopls/` paths or `go-review.googlesource.com` CLs.
