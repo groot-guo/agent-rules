@@ -1,12 +1,12 @@
 ---
 paths:
-  - .github/**
-  - "**/.github/**"
+  - .git/**
 ---
 
 # GitHub / External Platform Rules
 
-> Auto-loaded for projects with `.github/` directory (CI, issues, PR templates).
+> Auto-loaded for any git repo. `paths:` can only match file paths,
+> not git remote URLs — `.git/**` is the closest proxy.
 > Cross-project, language-agnostic.
 
 ## 1. API First, Don't Scrape JS Pages
