@@ -1,12 +1,6 @@
----
-paths:
-  - .git/**
----
-
 # GitHub / External Platform Rules
 
-> Auto-loaded for any git repo. `paths:` can only match file paths,
-> not git remote URLs — `.git/**` is the closest proxy.
+> Auto-loaded for GitHub PR/issue ops, `gh` commands, or web content fetching.
 > Cross-project, language-agnostic.
 
 ## 1. API First, Don't Scrape JS Pages
