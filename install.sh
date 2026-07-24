@@ -12,6 +12,12 @@ UNINSTALL=0
 case "${1:-}" in
   --dry-run) DRY_RUN=1 ;;
   --uninstall) UNINSTALL=1 ;;
+  "")
+    ;;
+  *)
+    echo "ERROR: unknown flag '$1' — use --dry-run, --uninstall, or none" >&2
+    exit 2
+    ;;
 esac
 
 REPO="$(cd "$(dirname "$0")" && pwd)"
@@ -48,7 +54,7 @@ if [ "$UNINSTALL" = 1 ]; then
 fi
 
 # ---------- install ----------
-echo "==> Install agent-rules → $CLAUDE_DIR${DRY_RUN:+ (dry-run)}"
+echo "==> Install agent-rules → $CLAUDE_DIR$([ "$DRY_RUN" = 1 ] && echo ' (dry-run)')"
 
 if [ ! -d "$CLAUDE_DIR" ]; then
   echo "ERROR: $CLAUDE_DIR not found — install Claude Code first" >&2
@@ -90,21 +96,29 @@ fi
 
 # 2. Sync common/ + rules/
 mkdir -p "$RULES_DIR/common"
-cp -r "$REPO/common/." "$RULES_DIR/common/"
-cp "$REPO/rules/"*.md "$RULES_DIR/"
+if ! cp -r "$REPO/common/." "$RULES_DIR/common/"; then
+  echo "ERROR: failed to sync common/" >&2; exit 1
+fi
+if ! cp "$REPO/rules/"*.md "$RULES_DIR/"; then
+  echo "ERROR: failed to sync rules/ — check that $REPO/rules/ has .md files" >&2; exit 1
+fi
 echo "    synced common/ + rules/"
 
 # 3. AGENTS.md
-cp "$REPO/AGENTS.md" "$CLAUDE_DIR/AGENTS.md"
+if ! cp "$REPO/AGENTS.md" "$CLAUDE_DIR/AGENTS.md"; then
+  echo "ERROR: failed to copy AGENTS.md" >&2; exit 1
+fi
 echo "    synced AGENTS.md"
 
 # 4. CLAUDE.md — drop @SOUL/@RULES/@RTK, add @AGENTS.md, keep the rest
 if [ "$wired" = 1 ]; then
   echo "    CLAUDE.md already wired (skip)"
 elif [ -f "$CLAUDE_MD" ]; then
-  awk '/^@(SOUL|RULES|RTK)\.md$/ {next} {print}' "$CLAUDE_MD" > "$CLAUDE_MD.tmp"
-  { echo "@AGENTS.md"; cat "$CLAUDE_MD.tmp"; } > "$CLAUDE_MD"
-  rm -f "$CLAUDE_MD.tmp"
+  tmp="$(mktemp)" || { echo "ERROR: mktemp failed" >&2; exit 1; }
+  trap 'rm -f "$tmp"' EXIT
+  awk '/^@(SOUL|RULES|RTK)\.md$/ {next} {print}' "$CLAUDE_MD" > "$tmp"
+  { echo "@AGENTS.md"; cat "$tmp"; } > "$CLAUDE_MD"
+  rm -f "$tmp"
   echo "    rewired CLAUDE.md → @AGENTS.md (dropped @SOUL/@RULES/@RTK, kept rest)"
 else
   echo "@AGENTS.md" > "$CLAUDE_MD"
