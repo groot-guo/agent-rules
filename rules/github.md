@@ -1,6 +1,12 @@
+---
+paths:
+  - .github/**
+  - "**/.github/**"
+---
+
 # GitHub / External Platform Rules
 
-> Auto-loaded for GitHub PR/issue ops, `gh` commands, or web content fetching.
+> Auto-loaded for projects with `.github/` directory (CI, issues, PR templates).
 > Cross-project, language-agnostic.
 
 ## 1. API First, Don't Scrape JS Pages

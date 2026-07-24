@@ -1,7 +1,7 @@
 ---
 paths:
-  - gopls/**
-  - "**/gopls/**"
+  - gopls/go.mod
+  - gopls/internal/**
 ---
 
 # gopls / Go Upstream Contribution Rules
