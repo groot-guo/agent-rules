@@ -85,8 +85,8 @@ agent-rules/
 ## 加载机制
 
 - `AGENTS.md` — 强制加载（入口通过 `~/.claude/CLAUDE.md` → `@AGENTS.md`）
-- `common/*.md` — 按场景主动 Read（见 AGENTS.md §8）
-- `rules/*.md` — 按文件类型主动 Read（见 AGENTS.md §7）；含 `paths:` frontmatter 的语言文件也会自动加载
+- `common/*.md` — 始终加载（通用标准，无条件）。同时按场景主动 Read（见 AGENTS.md §8）
+- `rules/<lang>/` + `rules/*.md` — 语言目录通过 `paths:` frontmatter 按文件类型加载；平铺文件无条件加载。同时按文件类型主动 Read（见 AGENTS.md §7）
 
 ## 许可
 

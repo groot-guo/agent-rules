@@ -86,8 +86,8 @@ agent-rules/
 ## Loading mechanism
 
 - `AGENTS.md` — force-loaded (entry via `~/.claude/CLAUDE.md` → `@AGENTS.md`)
-- `common/*.md` — proactively Read by scenario (see AGENTS.md §8)
-- `rules/*.md` — proactively Read by file type (see AGENTS.md §7); language files with `paths:` frontmatter may also auto-load
+- `common/*.md` — always loaded (common standards, unconditional). Also proactively Read by scenario (see AGENTS.md §8)
+- `rules/<lang>/` + `rules/*.md` — language dirs loaded by `paths:` frontmatter; flat files loaded unconditionally. Also proactively Read by file type (see AGENTS.md §7)
 
 ## License
 
