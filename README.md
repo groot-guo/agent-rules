@@ -8,7 +8,7 @@ Personal agent rules — cross-machine, cross-tool constraints for Claude Code (
 
 - `AGENTS.md` — universal hard rules (commit gate, security, communication, engineering discipline). Loaded every session.
 - `common/` — general engineering standards (code review, dev workflow, testing, coding style, performance, security, patterns). Loaded by scenario.
-- `rules/` — language/tool rules (go, python, rust, shell, sql, typescript, react, web, gopls-upstream, github). Loaded by file type.
+- `rules/` — language/tool rules organized in per-language directories. Each directory contains focused files (coding-style, testing, patterns, etc.). Loaded by file type.
 - `install.sh` — idempotent installer with backup + uninstall.
 
 Rules are in English; the agent responds in Chinese by default (see AGENTS.md §4).
@@ -68,10 +68,17 @@ agent-rules/
 │   ├── performance.md
 │   ├── security.md
 │   └── patterns.md
-├── rules/               # language/tool rules
-│   ├── go.md  python.md  rust.md  shell.md  sql.md
-│   ├── typescript.md  react.md  web.md
-│   └── gopls-upstream.md  github.md
+├── rules/               # language/tool rules (per-language dirs)
+│   ├── go/              # coding-style, testing, patterns
+│   ├── python/          # coding-style, testing, patterns
+│   ├── react/           # coding-style, testing, patterns, security
+│   ├── typescript/      # coding-style, testing
+│   ├── rust/            # coding-style, testing
+│   ├── web/             # coding-style, patterns
+│   ├── sql/             # coding-style
+│   ├── shell/           # coding-style
+│   ├── github.md        # GitHub ops (cross-cutting)
+│   └── gopls-upstream.md  # gopls upstream (project-specific)
 ├── install.sh
 └── README.zh.md         # 中文说明
 ```

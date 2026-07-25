@@ -5,11 +5,11 @@ paths:
   - "**/requirements.txt"
 ---
 
-# Python Project Rules
+# Python Coding Style
 
-> Auto-loaded for `*.py` / `pyproject.toml` / `requirements.txt`.
+> Naming, types, data structures, style. Extends `common/coding-style.md`.
 
-## 1. Baseline
+## Baseline
 
 - Python 3.11+, `pyproject.toml` for deps (no `setup.py` in new projects)
 - Package manager: **uv > poetry > pip-tools > pip**
@@ -18,7 +18,7 @@ paths:
 - Format: `ruff format` (replaces black)
 - Lint: `ruff check` (replaces flake8/pylint/isort)
 
-## 2. Naming
+## Naming
 
 - Modules/files: `snake_case.py`
 - Classes: `UpperCamelCase`
@@ -27,7 +27,7 @@ paths:
 - Private: `_internal`; double underscore only for real name mangling
 - No abbreviations (`config` not `cfg`)
 
-## 3. Type Annotations
+## Type Annotations
 
 - `dict`/`list`/`tuple` use builtin generics (PEP 585):
   ```python
@@ -38,7 +38,7 @@ paths:
 - Multi-return: `NamedTuple` or `dataclass`, not 4+ element tuples
 - `Any` is a cop-out — write a concrete type
 
-## 4. Data Structures
+## Data Structures
 
 | Scenario | Choice |
 |---|---|
@@ -49,31 +49,7 @@ paths:
 
 No bare dict as a data structure (unless it's a real key-value map).
 
-## 5. Exceptions
-
-- Custom exceptions inherit a specific base (`ValueError`/`RuntimeError`); never `Exception` directly
-- `except` must handle or re-raise — no `except: pass` / `except Exception: pass`
-- Resources via `with`; no manual `try/finally close`
-- Custom exceptions live in `exceptions.py` or at module top
-
-## 6. Async & Concurrency
-
-- Async = `asyncio`; don't mix `threading` data structures in
-- IO-bound → asyncio
-- CPU-bound → `multiprocessing` or `ProcessPoolExecutor`
-- No blocking IO in async funcs — wrap with `asyncio.to_thread()`
-- `async def` must `await` — no fire-and-forget (unless `asyncio.create_task` is explicit)
-
-## 7. Testing
-
-- `pytest` over unittest
-- Fixtures over setUp/tearDown
-- Parameterize: `@pytest.mark.parametrize`
-- Slow tests: `@pytest.mark.slow`; CI runs fast by default
-- Names describe behavior: `test_login_with_expired_token_raises_auth_error`
-- Mock with `pytest-mock`, not bare `unittest.mock`
-
-## 8. Style
+## Style
 
 - Line width 100 (ruff default)
 - Strings: `'` default, `"` when the string contains `'`
@@ -81,7 +57,12 @@ No bare dict as a data structure (unless it's a real key-value map).
 - f-strings over `.format()` / `%`
 - No docstring templates ("This function does...") — write real info
 
-## 9. Forbidden
+## Tool Priority
+
+- Python symbol defs / call chains → codegraph_*; no grep
+- Types uncertain → let `mypy`/`pyright` report, don't guess
+
+## Forbidden
 
 - `from x import *`
 - Mutable default args (`def f(x=[]):`)
@@ -90,8 +71,3 @@ No bare dict as a data structure (unless it's a real key-value map).
 - New dep without checking `pyproject.toml` for an equivalent
 - Mixing `pathlib` and `os.path` — new code uses `pathlib`
 - `eval`/`exec` on user input
-
-## 10. Tool Priority
-
-- Python symbol defs / call chains → codegraph_*; no grep
-- Types uncertain → let `mypy`/`pyright` report, don't guess

@@ -4,11 +4,11 @@ paths:
   - "**/Cargo.toml"
 ---
 
-# Rust Project Rules
+# Rust Coding Style
 
-> Auto-loaded for `*.rs` / `Cargo.toml`. Conventions for personal Rust projects (e.g. Lingxi).
+> Naming, modules, types, errors, async. Extends `common/coding-style.md`.
 
-## 1. Baseline
+## Baseline
 
 - Rust 1.75+, edition 2021
 - `cargo fmt --all` clean
@@ -16,7 +16,7 @@ paths:
 - Public APIs need doc comments (`missing_docs` at least warn)
 - Large projects split via Cargo workspace; single crate ≤ ~3000 lines
 
-## 2. Naming
+## Naming
 
 | Category | Rule |
 |---|---|
@@ -29,7 +29,7 @@ paths:
 
 No abbreviations (`config` not `cfg`).
 
-## 3. Errors
+## Errors
 
 **Lib (lib crate)** — `thiserror` enum:
 ```rust
@@ -50,20 +50,20 @@ pub type Result<T> = std::result::Result<T, Error>;
 - `?` over unwrap/expect
 - `unwrap()` only in tests or compile-time constants (`Regex::new("...").unwrap()`)
 
-## 4. Modules
+## Modules
 
 - Private by default; `pub(crate)`/`pub(super)`/`pub` only when needed
 - Re-export public APIs in `lib.rs` via `pub use` for short paths
 - Single-file module: `xxx.rs`; multi-file: `xxx/mod.rs`
 
-## 5. Types
+## Types
 
 - **Newtype** wraps domain concepts — no bare `String`/`PathBuf` everywhere
 - **enum** for state machines — make illegal states unrepresentable
 - String params: `&str` to borrow, `String` to own
 - Multi-return: struct/tuple struct, not `(A, B, C, D)`
 
-## 6. Async
+## Async
 
 - Binary: `#[tokio::main] async fn main()`
 - Lib default sync; annotate explicitly when async is needed
@@ -71,7 +71,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 - Don't hold std `Mutex` across await — use `tokio::sync::Mutex`
 - IO async; CPU-bound → `tokio::task::spawn_blocking`
 
-## 7. Doc Comments
+## Doc Comments
 
 Public APIs:
 ```rust
@@ -91,14 +91,7 @@ pub fn foo() -> Result<()> { ... }
 
 Standard sections: `# Arguments` / `# Errors` / `# Panics` / `# Examples`.
 
-## 8. Testing
-
-- Unit tests at source bottom: `#[cfg(test)] mod tests { ... }`
-- Integration tests in `tests/`
-- `tempfile` for temp dirs, `pretty_assertions` for diffs
-- Names describe behavior: `sync_with_conflict_returns_error`
-
-## 9. Dependencies
+## Dependencies
 
 Selection criteria:
 - Downloads > 1M/month
@@ -115,7 +108,7 @@ Mainstream picks:
 - Serde: serde + serde_json + toml
 - Logging: tracing + tracing-subscriber
 
-## 10. Lint Config
+## Lint Config
 
 workspace `Cargo.toml`:
 ```toml
@@ -130,7 +123,7 @@ panic = "warn"
 todo = "warn"
 ```
 
-## 11. Forbidden
+## Forbidden
 
 - `unsafe` (project-level `unsafe_code = "forbid"`)
 - `unwrap()`/`expect()`/`panic!()` in production paths

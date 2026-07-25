@@ -7,88 +7,9 @@ paths:
   - "**/*.svg"
 ---
 
-# Web Frontend General Rules
+# Web Patterns
 
-> Auto-loaded for `*.html` / `*.css` / `*.scss` / `*.less` / `*.svg` or web project context. Extends `typescript.md`.
-
-## CSS / Styling
-
-### Design Tokens
-
-Define design tokens as CSS custom properties. Do not hardcode palette, typography, or spacing repeatedly:
-
-```css
-:root {
-  --color-surface: oklch(98% 0 0);
-  --color-text: oklch(18% 0 0);
-  --color-accent: oklch(68% 0.21 250);
-
-  --text-base: clamp(1rem, 0.92rem + 0.4vw, 1.125rem);
-  --text-hero: clamp(3rem, 1rem + 7vw, 8rem);
-
-  --space-section: clamp(4rem, 3rem + 5vw, 10rem);
-
-  --duration-fast: 150ms;
-  --duration-normal: 300ms;
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-}
-```
-
-### Animation Properties
-
-Prefer compositor-friendly properties only:
-- `transform`
-- `opacity`
-- `clip-path`
-- `filter` (sparingly)
-
-Avoid animating layout-bound properties: `width`, `height`, `top`, `left`, `margin`, `padding`, `border`, `font-size`
-
-### File Organization
-
-Organize by feature or surface area, not by file type:
-
-```
-src/
-├── components/
-│   ├── hero/
-│   │   ├── Hero.tsx
-│   │   ├── HeroVisual.tsx
-│   │   └── hero.css
-│   └── ui/
-│       ├── Button.tsx
-│       └── SurfaceCard.tsx
-├── hooks/
-│   └── useReducedMotion.ts
-├── lib/
-│   └── animation.ts
-└── styles/
-    ├── tokens.css
-    ├── typography.css
-    └── global.css
-```
-
-### Naming
-
-- Components: `PascalCase` (`ScrollySection`, `SurfaceCard`)
-- CSS classes: kebab-case or utility classes
-- Animation timelines: camelCase with intent (`heroRevealTl`)
-
-## Semantic HTML
-
-Do not reach for generic `div` stacks when a semantic element exists:
-
-```html
-<header>
-  <nav aria-label="Main navigation">...</nav>
-</header>
-<main>
-  <section aria-labelledby="hero-heading">
-    <h1 id="hero-heading">...</h1>
-  </section>
-</main>
-<footer>...</footer>
-```
+> Performance, security, testing, hooks. Extends `common/patterns.md` and `common/security.md`.
 
 ## Performance
 
@@ -207,7 +128,7 @@ Permissions-Policy: camera=(), microphone=(), geolocation=()
 
 ### Priority Order
 
-1. **Visual Regression**: screenshot at 320, 768, 1024, 1440 breakpoints; hero sections, scrollytelling sections, and meaningful states
+1. **Visual Regression**: screenshot at 320, 768, 1024, 1440 breakpoints; hero sections and meaningful states
 2. **Accessibility**: automated checks, keyboard navigation, reduced-motion behavior, color contrast
 3. **Performance**: run Lighthouse against meaningful pages
 4. **Cross-Browser**: minimum Chrome, Firefox, Safari; test scrolling, motion, and fallback behavior
@@ -231,9 +152,8 @@ test('landing hero loads', async ({ page }) => {
 
 - Test utilities, data transforms, and custom hooks
 - For highly visual components, visual regression often carries more signal than brittle markup assertions
-- Visual regression supplements coverage targets; it does not replace them
 
-## Hooks (Claude Code Automation)
+## Claude Code Hooks
 
 ### PostToolUse
 
@@ -253,22 +173,6 @@ test('landing hero loads', async ({ page }) => {
         "matcher": "Write|Edit",
         "command": "timeout 60 pnpm tsc --noEmit --pretty false --incremental --tsBuildInfoFile node_modules/.cache/tsc-hook.tsbuildinfo"
       }
-    ]
-  }
-}
-```
-
-### PreToolUse (File Size Guard)
-
-Block writes that exceed 800 lines — enforce splitting into smaller modules.
-
-### Stop (Build Verification)
-
-```json
-{
-  "hooks": {
-    "Stop": [
-      { "command": "pnpm build" }
     ]
   }
 }

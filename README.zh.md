@@ -8,7 +8,7 @@
 
 - `AGENTS.md` — 通用硬规则（提交门禁、安全红线、沟通规范、工程纪律）。每次会话自动加载。
 - `common/` — 通用工程规范（代码审查、开发流程、测试、编码风格、性能、安全、设计模式）。按场景加载。
-- `rules/` — 语言 / 工具规则（go、python、rust、shell、sql、typescript、react、web、gopls-upstream、github）。按文件类型加载。
+- `rules/` — 语言 / 工具规则，按语言分目录，每个目录包含细分文件（coding-style、testing、patterns 等）。按文件类型加载。
 - `install.sh` — 幂等安装器，含备份 + 卸载功能。
 
 规则文件为英文；agent 默认用中文回复（见 AGENTS.md §4）。
@@ -68,10 +68,17 @@ agent-rules/
 │   ├── performance.md
 │   ├── security.md
 │   └── patterns.md
-├── rules/               # 语言 / 工具规则
-│   ├── go.md  python.md  rust.md  shell.md  sql.md
-│   ├── typescript.md  react.md  web.md
-│   └── gopls-upstream.md  github.md
+├── rules/               # 语言 / 工具规则（按语言分目录）
+│   ├── go/              # coding-style, testing, patterns
+│   ├── python/          # coding-style, testing, patterns
+│   ├── react/           # coding-style, testing, patterns, security
+│   ├── typescript/      # coding-style, testing
+│   ├── rust/            # coding-style, testing
+│   ├── web/             # coding-style, patterns
+│   ├── sql/             # coding-style
+│   ├── shell/           # coding-style
+│   ├── github.md        # GitHub 操作（跨领域）
+│   └── gopls-upstream.md  # gopls 上游（项目特定）
 └── install.sh
 ```
 

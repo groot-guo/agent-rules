@@ -7,9 +7,9 @@ paths:
 
 # SQL Rules
 
-> Auto-loaded for SQL (DDL / DML / migration / reports).
+> DDL, DML, performance, security.
 
-## 1. General
+## General
 
 - **Explicit columns** — no `SELECT *` (except aggregates)
 - Keywords uppercase: `SELECT`/`FROM`/`WHERE`/`JOIN`/`ON`
@@ -18,7 +18,7 @@ paths:
 - No `OR` chains of 5+ — use `IN` or a temp table
 - No "lucky" statements in prod beyond `LIMIT 1`
 
-## 2. Performance
+## Performance
 
 ### WHERE must hit an index
 
@@ -55,7 +55,7 @@ SELECT * FROM orders WHERE id > $last_id ORDER BY id LIMIT 20;
 - Large dataset → JOIN
 - `IN (subquery)` slow on big tables → `EXISTS` or JOIN
 
-## 3. DDL
+## DDL
 
 ### Must be reversible
 
@@ -82,7 +82,7 @@ migrations/
 - Unique: `uniq_<table>_<cols>`
 - Timestamps: `created_at`/`updated_at`/`deleted_at` (soft delete)
 
-## 4. DML
+## DML
 
 ### Writes need a transaction
 
@@ -111,14 +111,14 @@ INSERT INTO logs (level, msg) VALUES
 ('info', 'c');
 ```
 
-## 5. Security
+## Security
 
 - No string-concatenated SQL (injection)
 - Parameterized queries / prepared statements
 - Don't log raw SQL (may leak sensitive data)
 - DROP/TRUNCATE/DELETE without WHERE = dangerous (see AGENTS.md security red line)
 
-## 6. Pre-Write Checklist
+## Pre-Write Checklist
 
 - [ ] WHERE hits an index?
 - [ ] JOIN ≤ 3 tables?
@@ -128,7 +128,7 @@ INSERT INTO logs (level, msg) VALUES
 - [ ] DDL has a down migration?
 - [ ] No string concat (parameterized)?
 
-## 7. Forbidden
+## Forbidden
 
 - `SELECT *` (except aggregates)
 - Bare `JOIN` (must be INNER/LEFT)

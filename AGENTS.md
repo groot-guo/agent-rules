@@ -71,14 +71,14 @@ Three iron rules:
 
 | Trigger | Rule file |
 |---|---|
-| `*.go` / `go.mod` | `~/.claude/rules/go.md` |
-| `*.py` / `pyproject.toml` | `~/.claude/rules/python.md` |
-| `*.rs` / `Cargo.toml` | `~/.claude/rules/rust.md` |
-| Writing SQL | `~/.claude/rules/sql.md` |
-| `*.sh` / `*.bash` | `~/.claude/rules/shell.md` |
-| `*.ts` / `*.tsx` / `*.js` / `*.jsx` | `~/.claude/rules/typescript.md` |
-| `*.tsx` / `*.jsx` / React components / hooks | `~/.claude/rules/react.md` |
-| `*.html` / `*.css` / `*.scss` / `*.less` / frontend | `~/.claude/rules/web.md` |
+| `*.go` / `go.mod` | `~/.claude/rules/go/` |
+| `*.py` / `pyproject.toml` | `~/.claude/rules/python/` |
+| `*.rs` / `Cargo.toml` | `~/.claude/rules/rust/` |
+| Writing SQL | `~/.claude/rules/sql/` |
+| `*.sh` / `*.bash` | `~/.claude/rules/shell/` |
+| `*.ts` / `*.tsx` / `*.js` / `*.jsx` | `~/.claude/rules/typescript/` |
+| `*.tsx` / `*.jsx` / React components / hooks | `~/.claude/rules/react/` |
+| `*.html` / `*.css` / `*.scss` / `*.less` / frontend | `~/.claude/rules/web/` |
 | `gopls/` paths / `go-review` CL | `~/.claude/rules/gopls-upstream.md` |
 | GitHub ops / `gh` / `go-review` | `~/.claude/rules/github.md` |
 

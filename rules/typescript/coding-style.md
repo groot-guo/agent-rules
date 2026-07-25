@@ -6,9 +6,9 @@ paths:
   - "**/*.jsx"
 ---
 
-# TypeScript / JavaScript Rules
+# TypeScript Coding Style
 
-> Auto-loaded for `*.ts` / `*.tsx` / `*.js` / `*.jsx`.
+> Types, naming, immutability, security. Extends `common/coding-style.md`.
 
 ## Types
 
@@ -66,15 +66,6 @@ const userSchema = z.object({
 type UserInput = z.infer<typeof userSchema>;
 ```
 
-## Checklist
-
-- [ ] Exported functions typed
-- [ ] No `any`
-- [ ] No unnecessary mutation
-- [ ] No `console.log`
-- [ ] Files < 800 lines, functions < 50 lines
-- [ ] Nesting ≤ 4
-
 ## Security
 
 ### Secrets
@@ -96,7 +87,7 @@ if (!apiKey) throw new Error('API_KEY not configured');
 
 Prefixed vars are bundled into the client — treat as public.
 
-### Pre-Commit Security
+### Pre-Commit Security Checklist
 
 - [ ] No hardcoded secrets
 - [ ] All user input validated
@@ -104,51 +95,11 @@ Prefixed vars are bundled into the client — treat as public.
 - [ ] No XSS (escaped)
 - [ ] Errors don't leak sensitive data
 
-## Testing
+## General Checklist
 
-### Coverage: 80%+
-
-- Pure utilities ≥ 90%
-- Custom hooks ≥ 85%
-- Presentational components ≥ 80%
-- Container components ≥ 70%
-
-### TDD
-
-1. Write test (RED)
-2. Run — fails
-3. Minimal impl (GREEN)
-4. Run — passes
-5. Refactor (IMPROVE)
-6. Verify ≥ 80%
-
-### AAA
-
-```typescript
-test('calculates similarity correctly', () => {
-  // Arrange
-  const v1 = [1, 0, 0];
-  const v2 = [0, 1, 0];
-  // Act
-  const sim = calculateCosineSimilarity(v1, v2);
-  // Assert
-  expect(sim).toBe(0);
-});
-```
-
-### E2E
-
-Playwright for critical user flows.
-
-## Hooks (Claude Code)
-
-### PostToolUse
-
-- **Prettier**: auto-format after edit
-- **ESLint**: `--fix` after edit
-- **TypeScript**: `tsc --noEmit --incremental`
-- **console.log**: warn after edit
-
-### Stop
-
-- **console.log audit**: check modified files before session end
+- [ ] Exported functions typed
+- [ ] No `any`
+- [ ] No unnecessary mutation
+- [ ] No `console.log`
+- [ ] Files < 800 lines, functions < 50 lines
+- [ ] Nesting ≤ 4

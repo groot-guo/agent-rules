@@ -7,9 +7,7 @@ paths:
 
 # Shell Script Rules
 
-> Auto-loaded for `*.sh` / `*.bash` / `*.zsh`.
-
-## 1. Safe Mode (mandatory)
+## Safe Mode (mandatory)
 
 Top of every script:
 ```bash
@@ -25,7 +23,7 @@ IFS=$'\n\t'
 
 Intentional ignore: `cmd || true` — explicit, not by default.
 
-## 2. Variables & Quoting
+## Variables & Quoting
 
 - Double-quote all refs: `"$var"` / `"${var}"`
   ```bash
@@ -44,14 +42,14 @@ Intentional ignore: `cmd || true` — explicit, not by default.
   }
   ```
 
-## 3. Control Flow
+## Control Flow
 
 - `[[ ]]` not `[ ]` (safer, regex, fewer quotes)
 - Strings: `=`/`==`; numbers: `-eq`/`-lt` ...
 - Command exists: `command -v xxx >/dev/null` — not `which`
 - File checks: `-f` file / `-d` dir / `-e` any
 
-## 4. Functions
+## Functions
 
 - Output via `echo`, status via `return N`
 - No globals for args — use `$1` `$2` ...
@@ -63,17 +61,13 @@ Intentional ignore: `cmd || true` — explicit, not by default.
   }
   ```
 
-## 5. Logging & Errors
+## Logging & Errors
 
 - Errors to stderr: `echo "error: ..." >&2`
-- Exit codes:
-  - `0` success
-  - `1` generic error
-  - `2` usage error
-  - `127` command not found
+- Exit codes: `0` success, `1` generic error, `2` usage error, `127` command not found
 - On failure report "what failed + known info" — not just `exit 1`
 
-## 6. Argument Parsing
+## Argument Parsing
 
 Simple — positional + validation:
 ```bash
@@ -92,7 +86,7 @@ while getopts "f:vh" opt; do
 done
 ```
 
-## 7. Tools
+## Tools
 
 - `shellcheck script.sh` must pass
 - `printf` over `echo -e` (portable)
@@ -103,19 +97,19 @@ done
   ```
 - Large data in pipes — `awk`/`sed` in one pass; avoid cat | grep | awk
 
-## 8. Complexity Bound
+## Complexity Bound
 
 - **>100 lines → consider Python/Go**
 - >200 lines → must switch
 - Shell is bad at: JSON (use jq), complex data, HTTP (curl ok, parse with jq)
 
-## 9. Portability
+## Portability
 
 - Prefer bash 4+
 - macOS default bash is 3.2 — either `#!/usr/bin/env bash` + brew bash, or POSIX shell
 - BSD (macOS) vs GNU (Linux): `sed`/`find`/`xargs` differ — note it
 
-## 10. Forbidden
+## Forbidden
 
 - Scripts without `set -euo pipefail`
 - Unquoted variable refs (unless explicit split)
@@ -124,7 +118,7 @@ done
 - Skipping `shellcheck`
 - 100+ lines of business logic in shell
 
-## 11. Pre-Commit Checklist
+## Pre-Commit Checklist
 
 - [ ] `set -euo pipefail` at top?
 - [ ] All variables quoted?

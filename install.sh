@@ -68,7 +68,7 @@ fi
 
 if [ "$DRY_RUN" = 1 ]; then
   echo "  would back up rules/ + CLAUDE.md → $BACKUP_DIR (if not already)"
-  echo "  would sync common/ + rules/*.md → $RULES_DIR/"
+  echo "  would sync common/ + rules/ (per-language dirs) → $RULES_DIR/"
   echo "  would sync AGENTS.md → $CLAUDE_DIR/AGENTS.md"
   if [ "$wired" = 1 ]; then
     echo "  CLAUDE.md already wired to @AGENTS.md (skip)"
@@ -99,8 +99,19 @@ mkdir -p "$RULES_DIR/common"
 if ! cp -r "$REPO/common/." "$RULES_DIR/common/"; then
   echo "ERROR: failed to sync common/" >&2; exit 1
 fi
-if ! cp "$REPO/rules/"*.md "$RULES_DIR/"; then
-  echo "ERROR: failed to sync rules/ — check that $REPO/rules/ has .md files" >&2; exit 1
+# Sync language directories
+for dir in "$REPO/rules/"*/; do
+  dir_name="$(basename "$dir")"
+  rm -rf "$RULES_DIR/$dir_name"
+  if ! cp -r "$REPO/rules/$dir_name" "$RULES_DIR/"; then
+    echo "ERROR: failed to sync rules/$dir_name" >&2; exit 1
+  fi
+done
+# Copy flat .md files (github.md, gopls-upstream.md, etc.)
+if ls "$REPO/rules/"*.md >/dev/null 2>&1; then
+  if ! cp "$REPO/rules/"*.md "$RULES_DIR/"; then
+    echo "ERROR: failed to sync flat rule files" >&2; exit 1
+  fi
 fi
 echo "    synced common/ + rules/"
 
