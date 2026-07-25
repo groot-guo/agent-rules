@@ -7,7 +7,7 @@ Personal agent rules — cross-machine, cross-tool constraints for Claude Code (
 ## What's inside
 
 - `AGENTS.md` — universal hard rules (commit gate, security, communication, engineering discipline). Loaded every session.
-- `common/` — general engineering standards (code review, dev workflow, testing, coding style, performance). Loaded by scenario.
+- `common/` — general engineering standards (code review, dev workflow, testing, coding style, performance, security, patterns). Loaded by scenario.
 - `rules/` — language/tool rules (go, python, rust, shell, sql, typescript, react, web, gopls-upstream, github). Loaded by file type.
 - `install.sh` — idempotent installer with backup + uninstall.
 
@@ -65,7 +65,9 @@ agent-rules/
 │   ├── dev-workflow.md
 │   ├── testing.md
 │   ├── coding-style.md
-│   └── performance.md
+│   ├── performance.md
+│   ├── security.md
+│   └── patterns.md
 ├── rules/               # language/tool rules
 │   ├── go.md  python.md  rust.md  shell.md  sql.md
 │   ├── typescript.md  react.md  web.md

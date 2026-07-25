@@ -7,7 +7,7 @@
 ## 包含内容
 
 - `AGENTS.md` — 通用硬规则（提交门禁、安全红线、沟通规范、工程纪律）。每次会话自动加载。
-- `common/` — 通用工程规范（代码审查、开发流程、测试、编码风格、性能）。按场景加载。
+- `common/` — 通用工程规范（代码审查、开发流程、测试、编码风格、性能、安全、设计模式）。按场景加载。
 - `rules/` — 语言 / 工具规则（go、python、rust、shell、sql、typescript、react、web、gopls-upstream、github）。按文件类型加载。
 - `install.sh` — 幂等安装器，含备份 + 卸载功能。
 
@@ -65,7 +65,9 @@ agent-rules/
 │   ├── dev-workflow.md
 │   ├── testing.md
 │   ├── coding-style.md
-│   └── performance.md
+│   ├── performance.md
+│   ├── security.md
+│   └── patterns.md
 ├── rules/               # 语言 / 工具规则
 │   ├── go.md  python.md  rust.md  shell.md  sql.md
 │   ├── typescript.md  react.md  web.md

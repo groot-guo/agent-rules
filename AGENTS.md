@@ -93,3 +93,5 @@ Proactively Read by scenario:
 | Writing tests | `~/.claude/rules/common/testing.md` |
 | Coding style | `~/.claude/rules/common/coding-style.md` |
 | Perf-related changes | `~/.claude/rules/common/performance.md` |
+| Security review / sensitive code | `~/.claude/rules/common/security.md` |
+| Design / architecture decisions | `~/.claude/rules/common/patterns.md` |
