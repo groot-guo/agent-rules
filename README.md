@@ -7,7 +7,7 @@ Personal agent rules — cross-machine, cross-tool constraints for Claude Code (
 ## What's inside
 
 - `AGENTS.md` — universal hard rules (commit gate, security, communication, engineering discipline). Loaded every session.
-- `common/` — general engineering standards (code review, dev workflow, testing, coding style, performance, security, patterns). Loaded by scenario.
+- `common/` — general engineering standards (code review, dev workflow, testing, coding style, performance, security, patterns). Always loaded; also referenced by scenario.
 - `rules/` — language/tool rules organized in per-language directories. Each directory contains focused files (coding-style, testing, patterns, etc.). Loaded by file type.
 - `install.sh` — idempotent installer with backup + uninstall.
 
@@ -31,8 +31,8 @@ bash install.sh
 
 ## What install.sh does
 
-1. Backs up existing `~/.claude/rules/` + `CLAUDE.md` → `~/.claude/.agent-rules-backup/` (first run only)
-2. Syncs `common/` + `rules/` → `~/.claude/rules/`
+1. Backs up existing `~/.claude/rules/`, `CLAUDE.md`, and `AGENTS.md` → `~/.claude/.agent-rules-backup/` (first run only)
+2. Syncs managed files from `common/` + `rules/` → `~/.claude/rules/`, removing obsolete managed files and legacy flat rules without touching unrelated files
 3. Syncs `AGENTS.md` → `~/.claude/AGENTS.md`
 4. Rewires `~/.claude/CLAUDE.md`: drops `@SOUL/@RULES/@RTK`, adds `@AGENTS.md`, **preserves everything else** (CodeGraph block, custom content)
 
@@ -43,6 +43,14 @@ Idempotent — safe to re-run. CLAUDE.md already wired → skipped.
 ```bash
 bash install.sh --uninstall   # restores backups
 ```
+
+## Verification
+
+```bash
+bash tests/install.sh
+```
+
+The test uses an isolated temporary Claude directory and covers installation, legacy-rule cleanup, stale managed-rule cleanup, and uninstall restoration.
 
 ## Out of scope (configure separately)
 
@@ -80,6 +88,8 @@ agent-rules/
 │   ├── github.md        # GitHub ops (cross-cutting)
 │   └── gopls-upstream.md  # gopls upstream (project-specific)
 ├── install.sh
+├── tests/install.sh       # installer regression tests
+├── .github/workflows/test.yml
 └── README.zh.md         # 中文说明
 ```
 

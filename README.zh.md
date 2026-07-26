@@ -7,7 +7,7 @@
 ## 包含内容
 
 - `AGENTS.md` — 通用硬规则（提交门禁、安全红线、沟通规范、工程纪律）。每次会话自动加载。
-- `common/` — 通用工程规范（代码审查、开发流程、测试、编码风格、性能、安全、设计模式）。按场景加载。
+- `common/` — 通用工程规范（代码审查、开发流程、测试、编码风格、性能、安全、设计模式）。始终加载；并按场景主动引用。
 - `rules/` — 语言 / 工具规则，按语言分目录，每个目录包含细分文件（coding-style、testing、patterns 等）。按文件类型加载。
 - `install.sh` — 幂等安装器，含备份 + 卸载功能。
 
@@ -31,8 +31,8 @@ bash install.sh
 
 ## install.sh 做了什么
 
-1. 备份现有 `~/.claude/rules/` + `CLAUDE.md` → `~/.claude/.agent-rules-backup/`（仅首次运行）
-2. 同步 `common/` + `rules/` → `~/.claude/rules/`
+1. 备份现有 `~/.claude/rules/`、`CLAUDE.md` 与 `AGENTS.md` → `~/.claude/.agent-rules-backup/`（仅首次运行）
+2. 同步 `common/` + `rules/` 中受本项目管理的文件 → `~/.claude/rules/`；清理失效的受管文件与旧版平铺规则，不影响其他文件
 3. 同步 `AGENTS.md` → `~/.claude/AGENTS.md`
 4. 重写 `~/.claude/CLAUDE.md`：移除 `@SOUL/@RULES/@RTK`，加入 `@AGENTS.md`，**保留其余所有内容**（CodeGraph 块、自定义内容）
 
@@ -43,6 +43,14 @@ bash install.sh
 ```bash
 bash install.sh --uninstall   # 恢复备份
 ```
+
+## 验证
+
+```bash
+bash tests/install.sh
+```
+
+测试使用隔离的临时 Claude 目录，覆盖安装、旧规则清理、失效受管规则清理，以及卸载恢复。
 
 ## 不在安装范围内（需单独配置）
 
@@ -79,7 +87,9 @@ agent-rules/
 │   ├── shell/           # coding-style
 │   ├── github.md        # GitHub 操作（跨领域）
 │   └── gopls-upstream.md  # gopls 上游（项目特定）
-└── install.sh
+├── install.sh
+├── tests/install.sh       # 安装器回归测试
+└── .github/workflows/test.yml
 ```
 
 ## 加载机制

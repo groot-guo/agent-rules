@@ -4,137 +4,196 @@
 #   bash install.sh              # install
 #   bash install.sh --dry-run    # preview (no writes)
 #   bash install.sh --uninstall  # restore backups
-
 set -euo pipefail
-
+IFS=$'\n\t'
 DRY_RUN=0
 UNINSTALL=0
 case "${1:-}" in
   --dry-run) DRY_RUN=1 ;;
   --uninstall) UNINSTALL=1 ;;
-  "")
-    ;;
+  "") ;;
   *)
-    echo "ERROR: unknown flag '$1' — use --dry-run, --uninstall, or none" >&2
+    printf "ERROR: unknown flag '%s' — use --dry-run, --uninstall, or none\n" "$1" >&2
     exit 2
     ;;
 esac
-
 REPO="$(cd "$(dirname "$0")" && pwd)"
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 RULES_DIR="$CLAUDE_DIR/rules"
 BACKUP_DIR="$CLAUDE_DIR/.agent-rules-backup"
 CLAUDE_MD="$CLAUDE_DIR/CLAUDE.md"
-stamp() { date +%Y%m%d-%H%M%S; }
-
-# ---------- uninstall ----------
-if [ "$UNINSTALL" = 1 ]; then
-  echo "==> Uninstall: restore from $BACKUP_DIR"
-  if [ ! -d "$BACKUP_DIR" ]; then
-    echo "    no backup — nothing to restore"; exit 0
+AGENTS_MD="$CLAUDE_DIR/AGENTS.md"
+MANAGED_RULES="$CLAUDE_DIR/.agent-rules-managed-rules"
+TMP=""
+stamp() {
+  date +%Y%m%d-%H%M%S
+}
+cleanup_tmp() {
+  [[ -z "$TMP" ]] || rm -f "$TMP"
+}
+trap cleanup_tmp EXIT
+backup_file() {
+  local source="$1"
+  local backup="$2"
+  local label="$3"
+  if [[ -e "$backup" || -e "$backup.absent" ]]; then
+    return
   fi
-  if [ -d "$BACKUP_DIR/rules" ]; then
-    if [ -d "$RULES_DIR" ]; then
+  if [[ -f "$source" ]]; then
+    cp -p "$source" "$backup"
+    printf '    backed up %s\n' "$label"
+  else
+    : > "$backup.absent"
+  fi
+}
+cleanup_stale_rules() {
+  local relative source target
+  if [[ -f "$MANAGED_RULES" ]]; then
+    while IFS= read -r relative; do
+      [[ -n "$relative" ]] || continue
+      if [[ "$relative" == common/* ]]; then
+        source="$REPO/$relative"
+      else
+        source="$REPO/rules/$relative"
+      fi
+      target="$RULES_DIR/$relative"
+      if [[ ! -e "$source" && -f "$target" ]]; then
+        rm -f "$target"
+        printf '    removed stale rule %s\n' "$relative"
+      fi
+    done < "$MANAGED_RULES"
+  fi
+  # Versions before the per-language layout left these managed flat files behind.
+  local legacy_rule
+  for legacy_rule in go.md python.md react.md rust.md shell.md sql.md typescript.md web.md; do
+    target="$RULES_DIR/$legacy_rule"
+    if [[ -f "$target" ]]; then
+      rm -f "$target"
+      printf '    removed legacy rule %s\n' "$legacy_rule"
+    fi
+  done
+}
+write_managed_rules() {
+  TMP="$(mktemp "$CLAUDE_DIR/.agent-rules-managed-rules.XXXXXX")"
+  {
+    (
+      cd "$REPO"
+      find common -type f -print
+    )
+    (
+      cd "$REPO/rules"
+      find . -type f -print | sed 's#^\./##'
+    )
+  } | sort -u > "$TMP"
+  mv "$TMP" "$MANAGED_RULES"
+  TMP=""
+}
+restore_file() {
+  local target="$1"
+  local backup="$2"
+  local label="$3"
+  if [[ -f "$backup" ]]; then
+    if [[ -f "$target" ]]; then
+      mv "$target" "$BACKUP_DIR/${label}-replaced-$(stamp)"
+    fi
+    mv "$backup" "$target"
+    printf '    restored %s\n' "$label"
+  elif [[ -f "$backup.absent" && -f "$target" ]]; then
+    mv "$target" "$BACKUP_DIR/${label}-replaced-$(stamp)"
+    printf '    removed installed %s\n' "$label"
+  fi
+}
+# ---------- uninstall ----------
+if [[ "$UNINSTALL" -eq 1 ]]; then
+  printf '==> Uninstall: restore from %s\n' "$BACKUP_DIR"
+  if [[ ! -d "$BACKUP_DIR" ]]; then
+    printf '    no backup — nothing to restore\n'
+    exit 0
+  fi
+  if [[ -d "$BACKUP_DIR/rules" ]]; then
+    if [[ -d "$RULES_DIR" ]]; then
       mv "$RULES_DIR" "$BACKUP_DIR/rules-replaced-$(stamp)"
     fi
     mv "$BACKUP_DIR/rules" "$RULES_DIR"
-    echo "    restored rules/"
+    printf '    restored rules/\n'
+  elif [[ -f "$BACKUP_DIR/rules.absent" && -d "$RULES_DIR" ]]; then
+    mv "$RULES_DIR" "$BACKUP_DIR/rules-replaced-$(stamp)"
+    printf '    removed installed rules/\n'
   fi
-  if [ -f "$BACKUP_DIR/CLAUDE.md" ]; then
-    if [ -f "$CLAUDE_MD" ]; then
-      mv "$CLAUDE_MD" "$BACKUP_DIR/CLAUDE.md-replaced-$(stamp)"
-    fi
-    mv "$BACKUP_DIR/CLAUDE.md" "$CLAUDE_MD"
-    echo "    restored CLAUDE.md"
-  fi
-  rm -f "$CLAUDE_DIR/AGENTS.md"
-  echo "    removed AGENTS.md"
-  echo "==> Done. Restart Claude Code."
+  restore_file "$CLAUDE_MD" "$BACKUP_DIR/CLAUDE.md" "CLAUDE.md"
+  restore_file "$AGENTS_MD" "$BACKUP_DIR/AGENTS.md" "AGENTS.md"
+  rm -f "$MANAGED_RULES"
+  printf '==> Done. Restart Claude Code.\n'
   exit 0
 fi
-
 # ---------- install ----------
-echo "==> Install agent-rules → $CLAUDE_DIR$([ "$DRY_RUN" = 1 ] && echo ' (dry-run)')"
-
-if [ ! -d "$CLAUDE_DIR" ]; then
-  echo "ERROR: $CLAUDE_DIR not found — install Claude Code first" >&2
+if [[ ! -d "$CLAUDE_DIR" ]]; then
+  printf 'ERROR: %s not found — install Claude Code first\n' "$CLAUDE_DIR" >&2
   exit 1
 fi
-
-wired=0
-if [ -f "$CLAUDE_MD" ] && grep -q "^@AGENTS\.md$" "$CLAUDE_MD" 2>/dev/null; then
-  wired=1
-fi
-
-if [ "$DRY_RUN" = 1 ]; then
-  echo "  would back up rules/ + CLAUDE.md → $BACKUP_DIR (if not already)"
-  echo "  would sync common/ + rules/ (per-language dirs) → $RULES_DIR/"
-  echo "  would sync AGENTS.md → $CLAUDE_DIR/AGENTS.md"
-  if [ "$wired" = 1 ]; then
-    echo "  CLAUDE.md already wired to @AGENTS.md (skip)"
-  else
-    echo "  would rewire CLAUDE.md: drop @SOUL/@RULES/@RTK, add @AGENTS.md, keep rest"
-  fi
-  echo "==> Dry-run done. Run without --dry-run to apply."
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  printf '==> Install agent-rules → %s (dry-run)\n' "$CLAUDE_DIR"
+  printf '  would back up rules/, CLAUDE.md, and AGENTS.md → %s (if not already)\n' "$BACKUP_DIR"
+  printf '  would sync managed common/ + rules/ files → %s/\n' "$RULES_DIR"
+  printf '  would remove stale managed and legacy flat rules\n'
+  printf '  would sync AGENTS.md → %s\n' "$AGENTS_MD"
+  printf '==> Dry-run done. Run without --dry-run to apply.\n'
   exit 0
 fi
+printf '==> Install agent-rules → %s\n' "$CLAUDE_DIR"
 
-# 1. Back up (once)
-if [ ! -d "$BACKUP_DIR" ]; then
-  mkdir -p "$BACKUP_DIR"
-  if [ -d "$RULES_DIR" ]; then
-    cp -r "$RULES_DIR" "$BACKUP_DIR/rules"
-    echo "    backed up rules/"
+# 1. Back up each original target once.
+mkdir -p "$BACKUP_DIR"
+if [[ ! -d "$BACKUP_DIR/rules" && ! -e "$BACKUP_DIR/rules.absent" ]]; then
+  if [[ -d "$RULES_DIR" ]]; then
+    cp -R "$RULES_DIR" "$BACKUP_DIR/rules"
+    printf '    backed up rules/\n'
+  else
+    : > "$BACKUP_DIR/rules.absent"
   fi
-  if [ -f "$CLAUDE_MD" ]; then
-    cp "$CLAUDE_MD" "$BACKUP_DIR/CLAUDE.md"
-    echo "    backed up CLAUDE.md"
-  fi
-else
-  echo "    backup exists — skip"
 fi
+backup_file "$CLAUDE_MD" "$BACKUP_DIR/CLAUDE.md" "CLAUDE.md"
+backup_file "$AGENTS_MD" "$BACKUP_DIR/AGENTS.md" "AGENTS.md"
 
-# 2. Sync common/ + rules/
+# 2. Sync current files, then remove only stale files from the managed set.
 mkdir -p "$RULES_DIR/common"
-if ! cp -r "$REPO/common/." "$RULES_DIR/common/"; then
-  echo "ERROR: failed to sync common/" >&2; exit 1
-fi
-# Sync language directories
-for dir in "$REPO/rules/"*/; do
-  dir_name="$(basename "$dir")"
-  rm -rf "$RULES_DIR/$dir_name"
-  if ! cp -r "$REPO/rules/$dir_name" "$RULES_DIR/"; then
-    echo "ERROR: failed to sync rules/$dir_name" >&2; exit 1
-  fi
+cp -R "$REPO/common/." "$RULES_DIR/common/"
+
+for source_dir in "$REPO/rules/"*/; do
+  [[ -d "$source_dir" ]] || continue
+  dir_name="$(basename "$source_dir")"
+  mkdir -p "$RULES_DIR/$dir_name"
+  cp -R "$source_dir/." "$RULES_DIR/$dir_name/"
 done
-# Copy flat .md files (github.md, gopls-upstream.md, etc.)
-if ls "$REPO/rules/"*.md >/dev/null 2>&1; then
-  if ! cp "$REPO/rules/"*.md "$RULES_DIR/"; then
-    echo "ERROR: failed to sync flat rule files" >&2; exit 1
-  fi
+
+shopt -s nullglob
+flat_rules=("$REPO"/rules/*.md)
+if [[ ${#flat_rules[@]} -gt 0 ]]; then
+  cp "${flat_rules[@]}" "$RULES_DIR/"
 fi
-echo "    synced common/ + rules/"
+
+cleanup_stale_rules
+write_managed_rules
+printf '    synced managed common/ + rules/\n'
 
 # 3. AGENTS.md
-if ! cp "$REPO/AGENTS.md" "$CLAUDE_DIR/AGENTS.md"; then
-  echo "ERROR: failed to copy AGENTS.md" >&2; exit 1
-fi
-echo "    synced AGENTS.md"
+cp "$REPO/AGENTS.md" "$AGENTS_MD"
+printf '    synced AGENTS.md\n'
 
-# 4. CLAUDE.md — drop @SOUL/@RULES/@RTK, add @AGENTS.md, keep the rest
-if [ "$wired" = 1 ]; then
-  echo "    CLAUDE.md already wired (skip)"
-elif [ -f "$CLAUDE_MD" ]; then
-  tmp="$(mktemp)" || { echo "ERROR: mktemp failed" >&2; exit 1; }
-  trap 'rm -f "$tmp"' EXIT
-  awk '/^@(SOUL|RULES|RTK)\.md$/ {next} {print}' "$CLAUDE_MD" > "$tmp"
-  { echo "@AGENTS.md"; cat "$tmp"; } > "$CLAUDE_MD"
-  rm -f "$tmp"
-  echo "    rewired CLAUDE.md → @AGENTS.md (dropped @SOUL/@RULES/@RTK, kept rest)"
+# 4. CLAUDE.md — drop @SOUL/@RULES/@RTK, add @AGENTS.md, keep the rest.
+if [[ -f "$CLAUDE_MD" ]] && grep -qx '@AGENTS\.md' "$CLAUDE_MD"; then
+  printf '    CLAUDE.md already wired (skip)\n'
+elif [[ -f "$CLAUDE_MD" ]]; then
+  TMP="$(mktemp)"
+  awk '/^@(SOUL|RULES|RTK)\.md$/ {next} {print}' "$CLAUDE_MD" > "$TMP"
+  { printf '@AGENTS.md\n'; awk '{print}' "$TMP"; } > "$CLAUDE_MD"
+  rm -f "$TMP"
+  TMP=""
+  printf '    rewired CLAUDE.md → @AGENTS.md (dropped @SOUL/@RULES/@RTK, kept rest)\n'
 else
-  echo "@AGENTS.md" > "$CLAUDE_MD"
-  echo "    created CLAUDE.md → @AGENTS.md"
+  printf '@AGENTS.md\n' > "$CLAUDE_MD"
+  printf '    created CLAUDE.md → @AGENTS.md\n'
 fi
 
-echo "==> Done. Restart Claude Code to load."
-echo "    Uninstall: bash install.sh --uninstall"
+printf '==> Done. Restart Claude Code to load.\n'
+printf '    Uninstall: bash install.sh --uninstall\n'
