@@ -2,14 +2,31 @@
 
 > 中文版见 [README.zh.md](./README.zh.md)。修改 README 时请同步更新两个版本。
 
-Personal agent rules — cross-machine, cross-tool constraints for Claude Code (and other AGENTS.md-aware tools).
+Personal governance standards for coding agents, with room to extend to general-purpose autonomous agents such as OpenClaw.
+
+This project keeps safety boundaries, user authorization, task scope, commit gates, and engineering collaboration principles in a tool-independent core, then installs them through adapters for Claude Code, Codex, and future agents. The current installer supports Claude Code first; cross-agent support describes the target architecture, not completed compatibility with every tool.
+
+## Goals
+
+- **Consistent governance** — preserve the same authorization, safety, and collaboration principles across coding agents, projects, and machines
+- **Separate core from adapters** — keep universal rules independent of any agent's directories, commands, or tool protocol
+- **Expand incrementally** — support coding agents first, then add general-purpose autonomous agents such as OpenClaw when needed
+- **Project precedence** — allow project-specific standards to override general engineering guidance without weakening explicit safety boundaries
+- **Auditable and reversible** — make installed content and behavior clear, with recovery for existing configuration
+
+## Non-goals
+
+- Providing an ECC-style catalog of agents, skills, commands, and hooks
+- Replacing project-specific architecture, testing, or coding standards
+- Assuming every agent uses the same configuration format or exposes the same tool capabilities
+- Claiming support for an agent before its adapter is implemented
 
 ## What's inside
 
 - `AGENTS.md` — universal hard rules (commit gate, security, communication, engineering discipline). Loaded every session.
 - `common/` — general engineering standards (code review, dev workflow, testing, coding style, performance, security, patterns). Always loaded; also referenced by scenario.
 - `rules/` — language/tool rules organized in per-language directories. Each directory contains focused files (coding-style, testing, patterns, etc.). Loaded by file type.
-- `install.sh` — idempotent installer with backup + uninstall.
+- `install.sh` — current Claude Code adapter, with idempotent backup + uninstall.
 
 Rules are in English; the agent responds in Chinese by default (see AGENTS.md §4).
 

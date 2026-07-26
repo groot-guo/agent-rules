@@ -2,14 +2,31 @@
 
 > English version: [README.md](./README.md). When modifying README, keep both versions in sync.
 
-个人 agent 规则集 —— 跨机器、跨工具的 Claude Code（及其他 AGENTS.md 兼容工具）约束文件。
+面向 Coding Agent 的个人治理规范，并为 OpenClaw 等通用自主 Agent 预留扩展能力。
+
+本项目将安全边界、用户授权、任务范围、提交门禁和工程协作原则维护为与具体工具解耦的核心规则，再通过适配层安装到 Claude Code、Codex 及后续支持的 Agent。当前安装器首先支持 Claude Code；“跨 Agent”是项目的目标架构，不代表所有工具均已完成适配。
+
+## 目标
+
+- **统一治理** — 在不同 Coding Agent、项目和机器间保持一致的授权、安全与协作原则
+- **核心与适配分离** — 通用规则不绑定某个 Agent 的目录、命令或工具协议
+- **渐进扩展** — 先支持 Coding Agent，再按实际需要接入 OpenClaw 等通用自主 Agent
+- **项目优先** — 项目自身规范可以覆盖本项目的通用工程建议，但不能降低明确的安全边界
+- **可审计、可回滚** — 安装内容和行为清晰，已有配置可以恢复
+
+## 非目标
+
+- 不提供 ECC 式的大型 Agent、Skill、Command 和 Hook 集合
+- 不替代具体项目的架构、测试和编码规范
+- 不假设所有 Agent 使用相同的配置格式或具备相同的工具能力
+- 不声称尚未实现的 Agent 适配已经可用
 
 ## 包含内容
 
 - `AGENTS.md` — 通用硬规则（提交门禁、安全红线、沟通规范、工程纪律）。每次会话自动加载。
 - `common/` — 通用工程规范（代码审查、开发流程、测试、编码风格、性能、安全、设计模式）。始终加载；并按场景主动引用。
 - `rules/` — 语言 / 工具规则，按语言分目录，每个目录包含细分文件（coding-style、testing、patterns 等）。按文件类型加载。
-- `install.sh` — 幂等安装器，含备份 + 卸载功能。
+- `install.sh` — 当前面向 Claude Code 的幂等适配器，含备份 + 卸载功能。
 
 规则文件为英文；agent 默认用中文回复（见 AGENTS.md §4）。
 
