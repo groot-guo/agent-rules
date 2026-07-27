@@ -11,3 +11,16 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run installer regression tests
         run: bash tests/install.sh
+      - name: Run edge case tests
+        run: bash tests/edge-cases.sh
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -qq shellcheck
+          shellcheck install.sh adapters/*.sh tests/*.sh
+      - name: Rule file lint
+        run: bash tests/lint.sh

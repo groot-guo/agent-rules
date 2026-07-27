@@ -24,9 +24,10 @@ This project keeps safety boundaries, user authorization, task scope, commit gat
 ## What's inside
 
 - `AGENTS.md` — universal hard rules (commit gate, security, communication, engineering discipline). Loaded every session.
-- `common/` — general engineering standards (code review, dev workflow, testing, coding style, performance, security, patterns). Always loaded; also referenced by scenario.
-- `rules/` — language/tool rules organized in per-language directories. Each directory contains focused files (coding-style, testing, patterns, etc.). Loaded by file type.
-- `install.sh` — current Claude Code adapter, with idempotent backup + uninstall.
+- `guides/` — general engineering standards (code review, dev workflow, testing, coding style, performance, security, patterns) plus cross-cutting scenario guides (e.g. GitHub ops). Not auto-loaded; read on demand by scenario (AGENTS.md §7/§8).
+- `rules/` — language/tool rules organized in per-language directories. Each directory contains focused files (coding-style, testing, patterns, etc.). Loaded by file type via `paths:` frontmatter.
+- `install.sh` — entry point: detects installed coding agents and dispatches to adapters.
+- `adapters/` — per-agent installers. `claude.sh` is implemented; others (codex, cursor) are planned.
 
 Rules are in English; the agent responds in Chinese by default (see AGENTS.md §4).
 
@@ -46,12 +47,15 @@ bash install.sh
 # 4. Restart Claude Code
 ```
 
+`install.sh` auto-detects installed agents. Force one with `--agent <name>` (e.g. `--agent claude`).
+
 ## What install.sh does
 
-1. Backs up existing `~/.claude/rules/`, `CLAUDE.md`, and `AGENTS.md` → `~/.claude/.agent-rules-backup/` (first run only)
-2. Syncs managed files from `common/` + `rules/` → `~/.claude/rules/`, removing obsolete managed files and legacy flat rules without touching unrelated files
-3. Syncs `AGENTS.md` → `~/.claude/AGENTS.md`
-4. Rewires `~/.claude/CLAUDE.md`: drops `@SOUL/@RULES/@RTK`, adds `@AGENTS.md`, **preserves everything else** (CodeGraph block, custom content)
+1. Detects installed coding agents (`~/.claude`, `~/.codex`, `~/.cursor`) and dispatches to each adapter. Use `--agent <name>` to force one.
+2. The Claude adapter backs up existing `~/.claude/rules/`, `~/.claude/guides/`, `CLAUDE.md`, and `AGENTS.md` → `~/.claude/.agent-rules-backup/` (first run only)
+3. Syncs `guides/` → `~/.claude/guides/` and `rules/` → `~/.claude/rules/`, removing obsolete managed files and legacy flat rules without touching unrelated files
+4. Syncs `AGENTS.md` → `~/.claude/AGENTS.md`
+5. Rewires `~/.claude/CLAUDE.md`: adds `@AGENTS.md` at the top, **preserves everything else** (existing `@` references, CodeGraph block, custom content)
 
 Idempotent — safe to re-run. CLAUDE.md already wired → skipped.
 
@@ -64,10 +68,11 @@ bash install.sh --uninstall   # restores backups
 ## Verification
 
 ```bash
-bash tests/install.sh
+bash tests/install.sh   # installer regression
+bash tests/lint.sh      # rule file structure + route-table references
 ```
 
-The test uses an isolated temporary Claude directory and covers installation, legacy-rule cleanup, stale managed-rule cleanup, and uninstall restoration.
+`tests/install.sh` uses an isolated temporary Claude directory and covers installation, legacy cleanup (flat rules, `rules/common/`, `rules/github.md`), stale managed-rule cleanup, and uninstall restoration. `tests/lint.sh` checks that every `rules/` file declares `paths:`, no `guides/` file does, and all `AGENTS.md` route-table references resolve.
 
 ## Out of scope (configure separately)
 
@@ -85,15 +90,16 @@ install.sh only installs **rules**. These are not included — set them up indep
 agent-rules/
 ├── AGENTS.md            # entry, loaded every session
 ├── CLAUDE.md -> AGENTS.md  # symlink, stays in sync with AGENTS.md
-├── common/              # general engineering standards
+├── guides/              # L2: scenario guides (not auto-loaded; read via §7/§8)
 │   ├── code-review.md
 │   ├── dev-workflow.md
 │   ├── testing.md
 │   ├── coding-style.md
 │   ├── performance.md
 │   ├── security.md
-│   └── patterns.md
-├── rules/               # language/tool rules (per-language dirs)
+│   ├── patterns.md
+│   └── github.md        # GitHub ops (cross-cutting)
+├── rules/               # L1: language/tool rules (per-language dirs, paths: frontmatter)
 │   ├── go/              # coding-style, testing, patterns
 │   ├── python/          # coding-style, testing, patterns
 │   ├── react/           # coding-style, testing, patterns, security
@@ -102,19 +108,22 @@ agent-rules/
 │   ├── web/             # coding-style, patterns
 │   ├── sql/             # coding-style
 │   ├── shell/           # coding-style
-│   ├── github.md        # GitHub ops (cross-cutting)
-│   └── gopls-upstream.md  # gopls upstream (project-specific)
-├── install.sh
-├── tests/install.sh       # installer regression tests
+│   └── gopls-upstream.md  # gopls upstream (paths: gopls/**)
+├── install.sh           # entry: detect agents + dispatch
+├── adapters/
+│   └── claude.sh        # Claude Code adapter (codex/cursor planned)
+├── tests/
+│   ├── install.sh       # installer regression tests
+│   └── lint.sh          # rule file structure + route-table lint
 ├── .github/workflows/test.yml
 └── README.zh.md         # 中文说明
 ```
 
 ## Loading mechanism
 
-- `AGENTS.md` — force-loaded (entry via `~/.claude/CLAUDE.md` → `@AGENTS.md`)
-- `common/*.md` — always loaded (common standards, unconditional). Also proactively Read by scenario (see AGENTS.md §8)
-- `rules/<lang>/` + `rules/*.md` — language dirs loaded by `paths:` frontmatter; flat files loaded unconditionally. Also proactively Read by file type (see AGENTS.md §7)
+- `AGENTS.md` — force-loaded (entry via `~/.claude/CLAUDE.md` → `@AGENTS.md`). Contains the security red-line summary in §3.
+- `rules/<lang>/*` + `rules/gopls-upstream.md` — auto-loaded by file type via `paths:` frontmatter (L1). Also proactively Read by file type (AGENTS.md §7).
+- `guides/*.md` — NOT auto-loaded; read on demand by scenario (L2, AGENTS.md §7/§8). Keeps context lean.
 
 ## License
 

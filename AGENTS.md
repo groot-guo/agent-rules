@@ -80,7 +80,7 @@ Three iron rules:
 | `*.tsx` / `*.jsx` / React components / hooks | `~/.claude/rules/react/` |
 | `*.html` / `*.css` / `*.scss` / `*.less` / frontend | `~/.claude/rules/web/` |
 | `gopls/` paths / `go-review` CL | `~/.claude/rules/gopls-upstream.md` |
-| GitHub ops / `gh` / `go-review` | `~/.claude/rules/github.md` |
+| GitHub ops / `gh` / `go-review` | `~/.claude/guides/github.md` |
 
 ## 8. General Engineering Standards
 
@@ -88,10 +88,10 @@ Proactively Read by scenario:
 
 | Scenario | Rule file |
 |---|---|
-| Pre-commit review / audit | `~/.claude/rules/common/code-review.md` |
-| New feature dev flow | `~/.claude/rules/common/dev-workflow.md` |
-| Writing tests | `~/.claude/rules/common/testing.md` |
-| Coding style | `~/.claude/rules/common/coding-style.md` |
-| Perf-related changes | `~/.claude/rules/common/performance.md` |
-| Security review / sensitive code | `~/.claude/rules/common/security.md` |
-| Design / architecture decisions | `~/.claude/rules/common/patterns.md` |
+| Pre-commit review / audit | `~/.claude/guides/code-review.md` |
+| New feature dev flow | `~/.claude/guides/dev-workflow.md` |
+| Writing tests | `~/.claude/guides/testing.md` |
+| Coding style | `~/.claude/guides/coding-style.md` |
+| Perf-related changes | `~/.claude/guides/performance.md` |
+| Security review / sensitive code | `~/.claude/guides/security.md` |
+| Design / architecture decisions | `~/.claude/guides/patterns.md` |
