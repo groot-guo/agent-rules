@@ -98,7 +98,7 @@ printf 'user CLAUDE.md\n' > "$ABSENT_TEST_DIR/CLAUDE.md"
 # 2nd install + uninstall: user content must survive (not moved to *-replaced-*).
 CLAUDE_DIR="$ABSENT_TEST_DIR" bash "$ROOT/install.sh" --agent claude >/dev/null
 CLAUDE_DIR="$ABSENT_TEST_DIR" bash "$ROOT/install.sh" --agent claude --uninstall >/dev/null
-assert_file_contains "$ABSENT_TEST_DIR/rules/go/mine.md" "user rule"
-assert_file_contains "$ABSENT_TEST_DIR/CLAUDE.md" "user CLAUDE.md"
+grep -q "user rule" "$ABSENT_TEST_DIR/rules/go/mine.md" || fail "user rule lost after 2nd cycle"
+grep -q "user CLAUDE.md" "$ABSENT_TEST_DIR/CLAUDE.md" || fail "user CLAUDE.md lost after 2nd cycle"
 
 printf 'PASS: install lifecycle\n'

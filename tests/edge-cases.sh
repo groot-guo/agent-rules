@@ -11,15 +11,13 @@ fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
 
 # Test 1: no agent detected under bash 3.2 + set -u (must not leak "unbound variable").
 echo "=== Test 1: no agent detected ==="
-HOME="$WORK_DIR" bash "$ROOT/install.sh" 2>&1 | tee "$WORK_DIR/no-agent.log"
-[[ $? -eq 1 ]] || fail "no agent should exit 1"
+HOME="$WORK_DIR" bash "$ROOT/install.sh" >"$WORK_DIR/no-agent.log" 2>&1 && fail "no agent should exit 1" || true
 grep -q "no coding agent detected" "$WORK_DIR/no-agent.log" || fail "missing error message"
 ! grep -q "unbound variable" "$WORK_DIR/no-agent.log" || fail "leaked bash internals"
 
 # Test 2: unknown adapter exits 1.
 echo "=== Test 2: unknown adapter ==="
-bash "$ROOT/install.sh" --agent nonexistent 2>&1 | tee "$WORK_DIR/unknown.log"
-[[ $? -eq 1 ]] || fail "unknown adapter should exit 1"
+bash "$ROOT/install.sh" --agent nonexistent >"$WORK_DIR/unknown.log" 2>&1 && fail "unknown adapter should exit 1" || true
 grep -q "adapter not implemented yet" "$WORK_DIR/unknown.log" || fail "missing skip message"
 
 # Test 3: CLAUDE.md rewrite preserves existing @ references.
