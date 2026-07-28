@@ -4,7 +4,7 @@
 
 面向 Coding Agent 的个人治理规范，并为 OpenClaw 等通用自主 Agent 预留扩展能力。
 
-本项目将安全边界、用户授权、任务范围、提交门禁和工程协作原则维护为与具体工具解耦的核心规则，再通过适配层安装到 Claude Code、Codex 及后续支持的 Agent。当前安装器首先支持 Claude Code；"跨 Agent"是项目的目标架构，不代表所有工具均已完成适配。
+本项目将安全边界、用户授权、任务范围、提交门禁和工程协作原则维护为与具体工具解耦的核心规则，再通过适配层安装到 Claude Code、Codex 及后续支持的 Agent。当前安装器已支持 Claude Code 和 Codex；其他 Agent 仍在规划中。
 
 ## 目标
 
@@ -25,16 +25,17 @@
 
 - `AGENTS.md` — 通用硬规则（提交门禁、安全红线、沟通规范、工程纪律）。每次会话自动加载。
 - `guides/` — 通用工程规范（代码审查、开发流程、测试、编码风格、性能、安全、设计模式）及跨领域场景指南（如 GitHub 操作）。不自动加载；按场景按需 Read（AGENTS.md §7/§8）。
-- `rules/` — 语言 / 工具规则，按语言分目录，每个目录包含细分文件（coding-style、testing、patterns 等）。通过 `paths:` frontmatter 按文件类型加载。
+- `rules/` — 语言 / 工具规则，按语言分目录，每个目录包含细分文件（coding-style、testing、patterns 等）。Claude Code 可通过 `paths:` frontmatter 按文件类型加载；Codex 通过安装到全局 `AGENTS.md` block 的路由表按需读取。
 - `install.sh` — 入口：检测已安装的 Coding Agent 并分发到对应适配器。
-- `adapters/` — 各 Agent 的安装器。`claude.sh` 已实现；其余（codex、cursor）待实现。
+- `adapters/` — 各 Agent 的安装器。`claude.sh` 和 `codex.sh` 已实现；Cursor 待实现。
 
 规则文件为英文；agent 默认用中文回复（见 AGENTS.md §4）。
 
 ## 快速安装（新机器）
 
 ```bash
-# 1. 先安装 Claude Code（会创建 ~/.claude/）
+# 1. 先安装 Claude Code 和/或 Codex
+#    （会创建 ~/.claude/ 和/或 ~/.codex/）
 
 # 2. 克隆仓库
 git clone git@github.com:groot-guo/agent-rules.git
@@ -44,7 +45,7 @@ cd agent-rules
 bash install.sh --dry-run
 bash install.sh
 
-# 4. 重启 Claude Code
+# 4. 重启已安装的 Coding Agent
 ```
 
 `install.sh` 自动检测已安装的 Agent。用 `--agent <name>`（如 `--agent claude`）强制指定单个。
@@ -53,26 +54,28 @@ bash install.sh
 
 1. 检测已安装的 Coding Agent（`~/.claude`、`~/.codex`、`~/.cursor`）并分发到各适配器。用 `--agent <name>` 强制指定单个。
 2. Claude 适配器备份现有 `~/.claude/rules/`、`~/.claude/guides/`、`CLAUDE.md` 与 `AGENTS.md` → `~/.claude/.agent-rules-backup/`（仅首次运行）
-3. 同步 `guides/` → `~/.claude/guides/`、`rules/` → `~/.claude/rules/`；清理失效受管文件与旧版平铺规则，不影响其他文件
-4. 同步 `AGENTS.md` → `~/.claude/AGENTS.md`
-5. 改写 `~/.claude/CLAUDE.md`：在开头加入 `@AGENTS.md`，**保留其余所有内容**（现有的 `@` 引用、CodeGraph 块、自定义内容）
+3. Claude 适配器将详细内容同步到 `~/.claude/{rules,guides}/`，同步 `AGENTS.md`，并在保留其他内容的前提下向 `CLAUDE.md` 添加 `@AGENTS.md`
+4. Codex 适配器将详细内容同步到隔离的 `~/.codex/agent-rules/{rules,guides}/`；不会写入 Codex 自身的 `~/.codex/rules/`
+5. Codex 适配器在 `~/.codex/AGENTS.md` 中维护唯一的 marker block，保留 block 外的全部用户内容，并将 Claude 路径适配为 Codex namespace
+6. 两个适配器都只按各自 manifest 清理失效的受管文件
 
-幂等 —— 可安全重复运行。CLAUDE.md 已接入则跳过。
+幂等 —— 可安全重复运行。Codex managed marker 异常，或 payload namespace 已存在但没有 manifest 时，安装会安全失败而不接管现有内容。
 
 ## 卸载
 
 ```bash
-bash install.sh --uninstall   # 恢复备份
+bash install.sh --uninstall   # 恢复或移除各 adapter 管理的内容
 ```
 
 ## 验证
 
 ```bash
 bash tests/install.sh   # 安装器回归
+bash tests/codex-install.sh   # Codex adapter 生命周期
 bash tests/lint.sh      # 规则文件结构与路由表引用校验
 ```
 
-`tests/install.sh` 使用隔离的临时 Claude 目录，覆盖安装、旧规则清理（平铺规则、`rules/common/`、`rules/github.md`）、失效受管规则清理，以及卸载恢复。`tests/lint.sh` 检查：`rules/` 下文件必须声明 `paths:`、`guides/` 下文件不得声明 `paths:`、AGENTS.md 路由表引用的路径都能解析到仓库文件。
+`tests/install.sh` 使用隔离的临时 Claude 目录，覆盖安装、旧规则清理、失效受管规则清理和卸载恢复。`tests/codex-install.sh` 使用隔离的临时 Codex 目录，覆盖 managed block 合并、路径适配、namespace 隔离、stale 清理、dry-run、冲突和卸载保留行为。`tests/lint.sh` 检查：`rules/` 下文件必须声明 `paths:`、`guides/` 下文件不得声明 `paths:`、源 `AGENTS.md` 路由表引用的路径都能解析到仓库文件。
 
 ## 不在安装范围内（需单独配置）
 
@@ -111,9 +114,13 @@ agent-rules/
 │   └── gopls-upstream.md  # gopls 上游（paths: gopls/**）
 ├── install.sh           # 入口：检测 Agent + 分发
 ├── adapters/
-│   └── claude.sh        # Claude Code 适配器（codex/cursor 待实现）
+│   ├── claude.sh        # Claude Code 适配器
+│   └── codex.sh         # Codex 适配器
+├── docs/
+│   └── codex-adapter-design.md
 ├── tests/
 │   ├── install.sh       # 安装器回归测试
+│   ├── codex-install.sh # Codex adapter 生命周期测试
 │   └── lint.sh          # 规则文件结构与路由表校验
 ├── .github/workflows/test.yml
 └── README.zh.md         # 中文说明（本文件）
@@ -121,9 +128,11 @@ agent-rules/
 
 ## 加载机制
 
-- `AGENTS.md` — 强制加载（入口通过 `~/.claude/CLAUDE.md` → `@AGENTS.md`）。§3 含安全红线摘要。
-- `rules/<lang>/*` + `rules/gopls-upstream.md` — 通过 `paths:` frontmatter 按文件类型自动加载（L1）。同时按文件类型主动 Read（AGENTS.md §7）。
+- `AGENTS.md` — Claude 通过 `~/.claude/CLAUDE.md` → `@AGENTS.md` 加载同步文件；Codex 从 `~/.codex/AGENTS.md` 中加载受管副本。§3 含安全红线摘要。
+- `rules/<lang>/*` + `rules/gopls-upstream.md` — Claude 可通过 `paths:` frontmatter 按文件类型自动加载（L1）；Codex 通过 AGENTS.md §7 主动读取适配后的 `~/.codex/agent-rules/rules/` 路径。
 - `guides/*.md` — 不自动加载；按场景按需 Read（L2，AGENTS.md §7/§8）。保持 context 精简。
+
+Codex adapter 的约束、合并算法、回滚边界和验收测试见 [`docs/codex-adapter-design.md`](./docs/codex-adapter-design.md)。
 
 ## 许可
 
