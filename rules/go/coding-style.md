@@ -99,12 +99,6 @@ On merge/rebase conflicts:
 - Lazy single-point checks (e.g. `inComment(offset)`) over `make+copy` of a range
 - Fixed-pattern word match → `bytes.Index` + boundary check, not `regexp.MustCompile` (compile cost)
 
-## Tool Priority (with codegraph index)
-
-- Go symbol defs / call chains / impact → codegraph_* mandatory; no grep+read
-- Before changing an interface/public func → `codegraph_impact`
-- Before refactoring → `codegraph_callers`
-
 ## Forbidden
 
 - `_ = err` silent errors (unless commented)

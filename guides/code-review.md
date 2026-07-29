@@ -1,6 +1,6 @@
 # Code Review Standards
 
-> Pre-commit self-check. Complements `/code-review` (which scans diffs for bugs + CLAUDE.md compliance) — this covers dimensions the tool skips: coverage, file size, debug residue, severity triage, security triggers.
+> Pre-commit self-check. AGENTS.md §1 selects the environment-native review route; this checklist supplements that route and is not a second review pass.
 
 ## Checklist
 
@@ -19,9 +19,11 @@ Before commit:
 | Level | Meaning | Action |
 |---|---|---|
 | CRITICAL | Security hole / data loss | BLOCK — must fix |
-| HIGH | Bug / significant quality | WARN — should fix |
-| MEDIUM | Maintainability | INFO — consider |
+| HIGH | Bug / significant quality | BLOCK — must fix |
+| MEDIUM | Maintainability | REPORT — does not block |
 | LOW | Style | NOTE — optional |
+
+Codex priority mapping: P0/P1 → CRITICAL/HIGH; P2/P3 → MEDIUM/LOW.
 
 ## Security Triggers
 
@@ -41,6 +43,6 @@ Code touching these needs a security review (see AGENTS.md red line):
 
 ## Pass Criteria
 
-- No CRITICAL/HIGH → commit
-- Only HIGH → commit with caution, note risk
-- Any CRITICAL → block
+- No CRITICAL/HIGH → review passes
+- Any CRITICAL/HIGH → fix and re-run the same environment-native route
+- MEDIUM/LOW → report without blocking commit unless the user requested a stricter gate

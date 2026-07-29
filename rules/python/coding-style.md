@@ -57,9 +57,6 @@ No bare dict as a data structure (unless it's a real key-value map).
 - f-strings over `.format()` / `%`
 - No docstring templates ("This function does...") — write real info
 
-## Tool Priority
-
-- Python symbol defs / call chains → codegraph_*; no grep
 - Types uncertain → let `mypy`/`pyright` report, don't guess
 
 ## Forbidden

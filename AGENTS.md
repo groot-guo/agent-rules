@@ -4,23 +4,34 @@
 
 ## 1. Commit Gate
 
-Three iron rules:
-1. Code changes must pass `/code-review` before `git commit`
-2. Findings → fix → **re-run** review until clean
-3. Never commit proactively. Only on explicit "提交/commit/推一下"; "完成了/OK" is not an instruction — report and wait
+Commit rules:
+1. Never commit proactively. Only on explicit "提交/commit/推一下"; "完成了/OK" is not an instruction — report and wait
+2. Before committing code changes, including refactors and tests, run exactly one environment-native review route
+3. Fix CRITICAL/HIGH findings, then **re-run the same route** until no blocking findings remain
 
-**Pre-commit self-check**: review passed, findings resolved, re-run clean, user agreed, message drafted, no secrets, no out-of-scope changes. Stop if any unmet.
+**Pre-commit self-check**: selected review passed or an exception is documented, blocking findings resolved, user agreed, message drafted, no secrets, no out-of-scope changes. Stop if any unmet.
 
-**`/code-review` usage**: effort=medium default (<200 lines), high for refactors. No `--fix` by default — report, let user decide.
+**Review route — choose one, do not stack reviewers**:
+- **Claude Code** → `/code-review`; effort=medium by default (<200 lines), high for refactors. No `--fix` by default
+- **Codex** → run `codex review --uncommitted` automatically; use `--base <branch>` when the requested scope is a branch diff. If the CLI route is unavailable, use the surface's `/review`; review only, do not edit during the review pass
+- **Other / unavailable route** → manually audit the diff using `~/.claude/guides/code-review.md` and report that fallback
 
-**Exceptions (skip review only, NOT skip "no proactive commit")**: pure docs/config literals; user says "skip review" (note risk); review tool errors (manual self-check, inform).
+Codex `Auto-review` for sandbox approval requests is not code review and does not satisfy this gate.
 
-## 2. Tool Priority
+**Severity mapping**: Codex P0/P1 correspond to blocking CRITICAL/HIGH findings; P2/P3 correspond to non-blocking MEDIUM/LOW findings. For other reviewers, classify by equivalent impact.
 
-- `.codegraph/` present → **codegraph_*** first; no grep+read re-indexing (see MCP instructions)
-- No `.codegraph/` → grep/find; tell user `codegraph init -i` is available
+**Non-blocking findings**: MEDIUM/LOW are reported but do not prevent commit unless the user asks for a stricter gate.
+
+**Exceptions (skip review only, NOT skip "no proactive commit")**: pure docs/config literals; user says "skip review" (note risk); review tool errors after the manual fallback (inform).
+
+## 2. Tool Selection
+
+- Choose the smallest configured tool that can answer the question; optional tools are governed by their own installed instruction blocks
+- Use `rg` and direct reads for exact text, known files, docs/config, and narrow single-file work
+- For unfamiliar cross-file flows or change-impact analysis, use an available semantic/index tool when configured; otherwise fall back to `rg` and direct reads
+- If an optional tool errors or returns insufficient results, fall back without blind retries or changing its installation/index state
 - Terminal via RTK (hook auto-rewrites); Read not cat; no `find . -name` for symbols
-- "How does X work" → one codegraph_context + one explore; no sub-agents, no grep+read piles
+- "How does X work" → inspect the smallest relevant source or configured relationship tool. No sub-agents or grep+read piles
 
 ## 3. Security Red Line
 

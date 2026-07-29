@@ -29,8 +29,9 @@ Not mandatory for everything, but required for core logic / complex algorithms /
 
 ## 3. Review
 
-- Run `common/code-review.md` checklist right after coding
-- Fix CRITICAL/HIGH
+- Use the single environment-native route selected by AGENTS.md §1
+- Do not run both Claude Code and Codex reviewers for the same gate
+- Fix CRITICAL/HIGH, then re-run the same route
 - See AGENTS.md §1 Commit Gate
 
 ## 4. Commit
