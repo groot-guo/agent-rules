@@ -5,6 +5,7 @@ IFS=$'\n\t'
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORK_DIR="$(mktemp -d)"
+LITERAL_TILDE=$'\x7e'
 cleanup() { rm -rf "$WORK_DIR"; }
 trap cleanup EXIT
 
@@ -31,9 +32,9 @@ install_codex "$CODEX_DIR"
 assert_contains "$CODEX_DIR/AGENTS.md" '<!-- AGENT_RULES_START -->'
 assert_contains "$CODEX_DIR/AGENTS.md" '<!-- AGENT_RULES_END -->'
 assert_contains "$CODEX_DIR/AGENTS.md" 'user global instruction'
-assert_contains "$CODEX_DIR/AGENTS.md" '~/.codex/agent-rules/rules/go/'
-! grep -Fq '~/.claude/rules/' "$CODEX_DIR/AGENTS.md" || fail 'Claude rule path leaked into Codex AGENTS.md'
-! grep -Fq '~/.claude/guides/' "$CODEX_DIR/AGENTS.md" || fail 'Claude guide path leaked into Codex AGENTS.md'
+assert_contains "$CODEX_DIR/AGENTS.md" "${LITERAL_TILDE}/.codex/agent-rules/rules/go/"
+! grep -Fq "${LITERAL_TILDE}/.claude/rules/" "$CODEX_DIR/AGENTS.md" || fail 'Claude rule path leaked into Codex AGENTS.md'
+! grep -Fq "${LITERAL_TILDE}/.claude/guides/" "$CODEX_DIR/AGENTS.md" || fail 'Claude guide path leaked into Codex AGENTS.md'
 assert_exists "$CODEX_DIR/agent-rules/rules/go/coding-style.md"
 assert_exists "$CODEX_DIR/agent-rules/guides/code-review.md"
 assert_contains "$CODEX_DIR/.agent-rules-managed" 'rules/go/coding-style.md'
@@ -77,7 +78,9 @@ assert_missing "$DRY_DIR/.agent-rules-managed"
 CONFLICT_DIR="$WORK_DIR/conflict"
 mkdir -p "$CONFLICT_DIR/agent-rules"
 printf 'keep me\n' > "$CONFLICT_DIR/agent-rules/custom.md"
-install_codex "$CONFLICT_DIR" >/dev/null 2>&1 && fail 'unowned namespace should fail' || true
+if install_codex "$CONFLICT_DIR" >/dev/null 2>&1; then
+  fail 'unowned namespace should fail'
+fi
 assert_contains "$CONFLICT_DIR/agent-rules/custom.md" 'keep me'
 assert_missing "$CONFLICT_DIR/AGENTS.md"
 
@@ -85,7 +88,9 @@ assert_missing "$CONFLICT_DIR/AGENTS.md"
 MALFORMED_DIR="$WORK_DIR/malformed"
 mkdir -p "$MALFORMED_DIR"
 printf '<!-- AGENT_RULES_START -->\nuser content\n' > "$MALFORMED_DIR/AGENTS.md"
-install_codex "$MALFORMED_DIR" >/dev/null 2>&1 && fail 'malformed markers should fail' || true
+if install_codex "$MALFORMED_DIR" >/dev/null 2>&1; then
+  fail 'malformed markers should fail'
+fi
 assert_contains "$MALFORMED_DIR/AGENTS.md" 'user content'
 assert_missing "$MALFORMED_DIR/agent-rules"
 
@@ -94,7 +99,9 @@ UNSAFE_DIR="$WORK_DIR/unsafe"
 mkdir -p "$UNSAFE_DIR/agent-rules"
 printf 'user content\n' > "$UNSAFE_DIR/AGENTS.md"
 printf 'rules/../../outside\n' > "$UNSAFE_DIR/.agent-rules-managed"
-install_codex "$UNSAFE_DIR" --uninstall >/dev/null 2>&1 && fail 'unsafe manifest should fail' || true
+if install_codex "$UNSAFE_DIR" --uninstall >/dev/null 2>&1; then
+  fail 'unsafe manifest should fail'
+fi
 assert_contains "$UNSAFE_DIR/AGENTS.md" 'user content'
 assert_exists "$UNSAFE_DIR/.agent-rules-managed"
 

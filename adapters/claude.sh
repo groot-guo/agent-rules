@@ -49,7 +49,12 @@ restore_file() {
 write_managed() {
   TMP="$(mktemp "$CLAUDE_DIR/.agent-rules-managed.XXXXXX")"
   {
-    ( cd "$REPO" && find guides -type f -print 2>/dev/null || true )
+    if [[ -d "$REPO/guides" ]]; then
+      (
+        cd "$REPO" || exit 1
+        find guides -type f -print
+      )
+    fi
     ( cd "$REPO/rules" && find . -type f -print | sed 's#^\./##' )
   } | sort -u > "$TMP"
   mv "$TMP" "$MANAGED"

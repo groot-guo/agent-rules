@@ -4,6 +4,7 @@
 set -euo pipefail
 IFS=$'\n\t'
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+LITERAL_TILDE=$'\x7e'
 cd "$ROOT"
 
 fail() { printf 'FAIL: %s\n' "$1" >&2; exit 1; }
@@ -17,14 +18,16 @@ done < <(find rules -name '*.md' -type f)
 # 2. guides/ files are L2 (not auto-loaded; Read on demand via §7/§8) — must NOT declare `paths:`.
 if [[ -d guides ]]; then
   while IFS= read -r f; do
-    grep -q '^paths:' "$f" && fail "guides/ file must not have 'paths:' (not auto-loaded): $f" || true
+    if grep -q '^paths:' "$f"; then
+      fail "guides/ file must not have 'paths:' (not auto-loaded): $f"
+    fi
   done < <(find guides -name '*.md' -type f)
 fi
 
 # 3. AGENTS.md §7/§8 route-table references must resolve to repo files.
 while IFS= read -r ref; do
-  rel="$(printf '%s' "$ref" | sed 's,^~/.claude/,,; s,/$,,')"
+  rel="$(printf '%s' "$ref" | sed "s,^${LITERAL_TILDE}/.claude/,,; s,/$,,")"
   [[ -n "$rel" && -e "$ROOT/$rel" ]] || fail "AGENTS.md references missing path: $ref (-> $rel)"
-done < <(grep -oE '~/\.claude/(rules|guides)/[A-Za-z0-9/._-]+' AGENTS.md | sort -u)
+done < <(grep -oE "${LITERAL_TILDE}/\\.claude/(rules|guides)/[A-Za-z0-9/._-]+" AGENTS.md | sort -u)
 
 printf 'PASS: rules lint\n'
