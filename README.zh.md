@@ -24,7 +24,7 @@
 ## 包含内容
 
 - `AGENTS.md` — 通用硬规则（提交门禁、安全红线、沟通规范、工程纪律）。每次会话自动加载。
-- `guides/` — 通用工程规范（代码审查、开发流程、测试、编码风格、性能、安全、设计模式）及跨领域场景指南（如 GitHub 操作）。不自动加载；按场景按需 Read（AGENTS.md §7/§8）。
+- `guides/` — 通用工程规范（开发流程、测试、编码风格、性能、安全、设计模式）及跨领域场景指南（如 GitHub 操作）。不自动加载；按场景按需 Read（AGENTS.md §7/§8）。
 - `rules/` — 语言 / 工具规则，按语言分目录，每个目录包含细分文件（coding-style、testing、patterns 等）。Claude Code 可通过 `paths:` frontmatter 按文件类型加载；Codex 通过安装到全局 `AGENTS.md` block 的路由表按需读取。
 - `install.sh` — 入口：检测已安装的 Coding Agent 并分发到对应适配器。
 - `adapters/` — 各 Agent 的安装器。`claude.sh` 和 `codex.sh` 已实现；Cursor 待实现。
@@ -94,7 +94,6 @@ agent-rules/
 ├── AGENTS.md            # 入口，每次会话加载
 ├── CLAUDE.md -> AGENTS.md  # 符号链接，保持同步
 ├── guides/              # L2：场景指南（不自动加载；经 §7/§8 按需 Read）
-│   ├── code-review.md
 │   ├── dev-workflow.md
 │   ├── testing.md
 │   ├── coding-style.md

@@ -24,7 +24,7 @@ printf 'original agent instructions\n' > "$CLAUDE_DIR/AGENTS.md"
 printf 'legacy react rule\n' > "$CLAUDE_DIR/rules/react.md"
 # Legacy rules/common/ (pre guides split).
 mkdir -p "$CLAUDE_DIR/rules/common"
-printf 'legacy common rule\n' > "$CLAUDE_DIR/rules/common/code-review.md"
+printf 'legacy common rule\n' > "$CLAUDE_DIR/rules/common/legacy.md"
 # Legacy rules/github.md (pre guides split).
 printf 'legacy github rule\n' > "$CLAUDE_DIR/rules/github.md"
 # User-owned rules (must be preserved).
@@ -48,12 +48,10 @@ assert_missing "$CLAUDE_DIR/rules/common"
 assert_missing "$CLAUDE_DIR/rules/github.md"
 # github.md now lives in guides/.
 assert_exists "$CLAUDE_DIR/guides/github.md"
-assert_exists "$CLAUDE_DIR/guides/code-review.md"
 # User files preserved.
 assert_file_contains "$CLAUDE_DIR/rules/custom.md" "user rule"
 assert_file_contains "$CLAUDE_DIR/rules/go/custom.md" "user Go rule"
 # Managed manifest tracks both guides/ and rules/.
-assert_file_contains "$CLAUDE_DIR/.agent-rules-managed" "guides/code-review.md"
 assert_file_contains "$CLAUDE_DIR/.agent-rules-managed" "go/coding-style.md"
 
 # Stale cleanup: inject an obsolete managed entry, reinstall, must be removed.

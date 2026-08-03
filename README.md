@@ -24,7 +24,7 @@ This project keeps safety boundaries, user authorization, task scope, commit gat
 ## What's inside
 
 - `AGENTS.md` — universal hard rules (commit gate, security, communication, engineering discipline). Loaded every session.
-- `guides/` — general engineering standards (code review, dev workflow, testing, coding style, performance, security, patterns) plus cross-cutting scenario guides (e.g. GitHub ops). Not auto-loaded; read on demand by scenario (AGENTS.md §7/§8).
+- `guides/` — general engineering standards (dev workflow, testing, coding style, performance, security, patterns) plus cross-cutting scenario guides (e.g. GitHub ops). Not auto-loaded; read on demand by scenario (AGENTS.md §7/§8).
 - `rules/` — language/tool rules organized in per-language directories. Claude Code can load them by file type via `paths:` frontmatter; Codex reads them on demand through the route table installed in its global `AGENTS.md` block.
 - `install.sh` — entry point: detects installed coding agents and dispatches to adapters.
 - `adapters/` — per-agent installers. `claude.sh` and `codex.sh` are implemented; Cursor is planned.
@@ -94,7 +94,6 @@ agent-rules/
 ├── AGENTS.md            # entry, loaded every session
 ├── CLAUDE.md -> AGENTS.md  # symlink, stays in sync with AGENTS.md
 ├── guides/              # L2: scenario guides (not auto-loaded; read via §7/§8)
-│   ├── code-review.md
 │   ├── dev-workflow.md
 │   ├── testing.md
 │   ├── coding-style.md

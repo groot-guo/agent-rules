@@ -36,7 +36,6 @@ assert_contains "$CODEX_DIR/AGENTS.md" "${LITERAL_TILDE}/.codex/agent-rules/rule
 ! grep -Fq "${LITERAL_TILDE}/.claude/rules/" "$CODEX_DIR/AGENTS.md" || fail 'Claude rule path leaked into Codex AGENTS.md'
 ! grep -Fq "${LITERAL_TILDE}/.claude/guides/" "$CODEX_DIR/AGENTS.md" || fail 'Claude guide path leaked into Codex AGENTS.md'
 assert_exists "$CODEX_DIR/agent-rules/rules/go/coding-style.md"
-assert_exists "$CODEX_DIR/agent-rules/guides/code-review.md"
 assert_contains "$CODEX_DIR/.agent-rules-managed" 'rules/go/coding-style.md'
 assert_contains "$CODEX_DIR/rules/default.rules" 'prefix_rule'
 

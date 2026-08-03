@@ -12,9 +12,10 @@ Commit rules:
 **Pre-commit self-check**: selected review passed or an exception is documented, blocking findings resolved, user agreed, message drafted, no secrets, no out-of-scope changes. Stop if any unmet.
 
 **Review route — choose one, do not stack reviewers**:
-- **Claude Code** → `/code-review`; effort=medium by default (<200 lines), high for refactors. No `--fix` by default
-- **Codex** → run `codex review --uncommitted` automatically; use `--base <branch>` when the requested scope is a branch diff. If the CLI route is unavailable, use the surface's `/review`; review only, do not edit during the review pass
-- **Other / unavailable route** → manually audit the diff using `~/.claude/guides/code-review.md` and report that fallback
+- **Claude Code** → automatically invoke the native `/code-review` action in the current session; effort=medium by default (<200 lines), high for refactors. No `--fix` by default. If it cannot be invoked, prompt the user to run it manually
+- **Codex Desktop** → automatically invoke the native Review action for the current uncommitted workspace; opening a Review panel alone does not count as running review. If it cannot be invoked, prompt the user to trigger it manually
+- **Codex CLI** → automatically run `codex review --uncommitted`; use `--base <branch>` when the requested scope is a branch diff. If it fails, prompt the user to run it manually
+- **Unavailable native route** → tell the user to invoke the native Review action manually; do not perform a manual substitute or claim that review passed
 
 Codex `Auto-review` for sandbox approval requests is not code review and does not satisfy this gate.
 
@@ -22,7 +23,17 @@ Codex `Auto-review` for sandbox approval requests is not code review and does no
 
 **Non-blocking findings**: MEDIUM/LOW are reported but do not prevent commit unless the user asks for a stricter gate.
 
-**Exceptions (skip review only, NOT skip "no proactive commit")**: pure docs/config literals; user says "skip review" (note risk); review tool errors after the manual fallback (inform).
+**Exceptions (skip review only, NOT skip "no proactive commit")**: pure docs/config literals; user says "skip review" (note risk). If the native Review action is unavailable, inform the user and ask for manual invocation; do not claim that review passed.
+
+### Code Review Workflow
+
+- When a task modifies code or configuration, the agent must automatically attempt the native Review action after implementation and before final handoff or commit readiness. If execution fails or the active surface exposes only a Review panel, prompt the user to invoke the native Review manually. Do not execute a substitute or claim that review passed before a native Review result is available.
+- Review scope always includes staged, unstaged, and untracked files. Enumerate all three before reviewing, and do not silently omit an untracked file. `codex review --uncommitted` covers this complete scope; if the selected native operation cannot, stop and ask the user to invoke it manually.
+- The review phase is read-only: do not modify files, apply fixes, stage or unstage changes, commit, or push. Report the selected route and any unavailable condition explicitly.
+- Report only issues introduced by the current changes that are reproducible and actionable. Do not report pre-existing problems or speculative concerns; each finding should include enough evidence and a concrete next action.
+- Use normal Markdown for the review summary. When a finding needs a code location, use `::code-comment` with the file and line information rather than inventing another annotation format.
+- CRITICAL/HIGH findings block commit and must be fixed. MEDIUM/LOW findings are reported by default but do not block commit unless the user requests a stricter gate.
+- After fixing any CRITICAL/HIGH finding from a native Review, ask the user to invoke the same native review route again until no blocking findings remain.
 
 ## 2. Tool Selection
 
@@ -99,7 +110,6 @@ Proactively Read by scenario:
 
 | Scenario | Rule file |
 |---|---|
-| Pre-commit review / audit | `~/.claude/guides/code-review.md` |
 | New feature dev flow | `~/.claude/guides/dev-workflow.md` |
 | Writing tests | `~/.claude/guides/testing.md` |
 | Coding style | `~/.claude/guides/coding-style.md` |

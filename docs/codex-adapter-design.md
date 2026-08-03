@@ -46,7 +46,6 @@ adapter 使用以下独立 namespace：
     │   ├── python/
     │   └── ...
     └── guides/
-        ├── code-review.md
         ├── testing.md
         └── ...
 ```
