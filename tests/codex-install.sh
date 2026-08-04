@@ -38,6 +38,10 @@ assert_contains "$CODEX_DIR/AGENTS.md" "${LITERAL_TILDE}/.codex/agent-rules/rule
 assert_exists "$CODEX_DIR/agent-rules/rules/go/coding-style.md"
 assert_contains "$CODEX_DIR/.agent-rules-managed" 'rules/go/coding-style.md'
 assert_contains "$CODEX_DIR/rules/default.rules" 'prefix_rule'
+assert_contains "$CODEX_DIR/AGENTS.md" '**Codex CLI** → automatically run `codex review --uncommitted`'
+! grep -Fq '**Claude Code**' "$CODEX_DIR/AGENTS.md" || fail 'Codex AGENTS.md must not contain the Claude review route'
+! grep -Fq '{{' "$CODEX_DIR/AGENTS.md" || fail 'Codex AGENTS.md still contains placeholders'
+! grep -Fq '<!-- agent-route:' "$CODEX_DIR/AGENTS.md" || fail 'Codex AGENTS.md still contains route markers'
 
 # Reinstall replaces one managed block and removes stale managed files.
 printf 'obsolete\n' > "$CODEX_DIR/agent-rules/rules/go/obsolete.md"
@@ -82,6 +86,23 @@ if install_codex "$CONFLICT_DIR" >/dev/null 2>&1; then
 fi
 assert_contains "$CONFLICT_DIR/agent-rules/custom.md" 'keep me'
 assert_missing "$CONFLICT_DIR/AGENTS.md"
+
+# A non-empty global AGENTS.override.md shadows the managed AGENTS.md — install fails closed.
+SHADOW_DIR="$WORK_DIR/shadow"
+mkdir -p "$SHADOW_DIR"
+printf 'override rules\n' > "$SHADOW_DIR/AGENTS.override.md"
+if install_codex "$SHADOW_DIR" >/dev/null 2>&1; then
+  fail 'non-empty AGENTS.override.md should fail install'
+fi
+assert_contains "$SHADOW_DIR/AGENTS.override.md" 'override rules'
+assert_missing "$SHADOW_DIR/AGENTS.md"
+
+# An empty AGENTS.override.md does not shadow the managed file — install proceeds.
+EMPTY_OVERRIDE_DIR="$WORK_DIR/empty-override"
+mkdir -p "$EMPTY_OVERRIDE_DIR"
+: > "$EMPTY_OVERRIDE_DIR/AGENTS.override.md"
+install_codex "$EMPTY_OVERRIDE_DIR"
+assert_contains "$EMPTY_OVERRIDE_DIR/AGENTS.md" '<!-- AGENT_RULES_START -->'
 
 # Malformed markers fail without modifying AGENTS.md or payload files.
 MALFORMED_DIR="$WORK_DIR/malformed"

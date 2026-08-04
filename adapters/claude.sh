@@ -7,6 +7,7 @@ IFS=$'\n\t'
 : "${REPO:?REPO must be set by install.sh}"
 : "${DRY_RUN:=0}"
 : "${UNINSTALL:=0}"
+source "$REPO/lib/render-agents.sh"
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 
 RULES_DIR="$CLAUDE_DIR/rules"
@@ -201,11 +202,15 @@ cleanup_stale
 write_managed
 printf '    synced guides/ + rules/\n'
 
-# 3. AGENTS.md
-cp "$REPO/AGENTS.md" "$AGENTS_MD"
+# 3. AGENTS.md — render per-agent paths and review route.
+TMP="$(mktemp)"
+chmod 644 "$TMP"
+render_agents_md claude '~/.claude/rules' '~/.claude/guides' "$REPO/AGENTS.md" > "$TMP"
+mv "$TMP" "$AGENTS_MD"
+TMP=""
 printf '    synced AGENTS.md\n'
 
-# 4. CLAUDE.md — drop @SOUL/@RULES/@RTK, add @AGENTS.md, keep the rest.
+# 4. CLAUDE.md — prepend @AGENTS.md, keep existing content.
 if [[ -f "$CLAUDE_MD" ]] && grep -qx '@AGENTS\.md' "$CLAUDE_MD"; then
   printf '    CLAUDE.md already wired (skip)\n'
 elif [[ -f "$CLAUDE_MD" ]]; then

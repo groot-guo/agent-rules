@@ -16,6 +16,7 @@
 | 幂等更新 | 重复安装只替换受管内容，不产生重复 block |
 | 可回滚 | 卸载只移除 adapter 管理的内容，保留用户后续修改和非受管文件 |
 | 可验证 | 支持隔离目录测试，不访问真实 `~/.codex/` |
+| 按 agent 渲染 | 安装结果只保留当前 agent 的 review route 与规则路径 |
 
 ## 3. 非目标
 
@@ -69,16 +70,23 @@ adapter 在 `~/.codex/AGENTS.md` 中维护唯一 block：
 4. marker 缺失、重复或顺序错误时立即失败，不修改文件。
 5. 写入通过同目录临时文件加原子 `mv` 完成，避免生成半写文件。
 
-### 4.3 路径适配
+### 4.3 路径与路由适配
 
-仓库根 `AGENTS.md` 是 hard rules 的唯一来源。安装时只执行以下路径映射，不维护第二份规则副本：
+仓库根 `AGENTS.md` 是 hard rules 的唯一来源，使用 `{{RULES_DIR}}` / `{{GUIDES_DIR}}` 占位符表示规则路径，用 `<!-- agent-route:claude -->` / `<!-- agent-route:codex -->` 标记块存放各 agent 的 review route。安装时 adapter 只做以下渲染，不维护第二份规则副本：
 
-| 源路径 | Codex 安装路径 |
-|---|---|
-| `~/.claude/rules/` | `~/.codex/agent-rules/rules/` |
-| `~/.claude/guides/` | `~/.codex/agent-rules/guides/` |
+| 模板占位符 | Claude 渲染值 | Codex 渲染值 |
+|---|---|---|
+| `{{RULES_DIR}}` | `~/.claude/rules` | `~/.codex/agent-rules/rules` |
+| `{{GUIDES_DIR}}` | `~/.claude/guides` | `~/.codex/agent-rules/guides` |
 
-除上述路径前缀外，adapter 不改写规则文本。
+渲染规则：
+
+1. 只保留当前 agent 的 `agent-route` 块并移除标记行，其他 agent 的 review route 不进入安装结果。
+2. `<!-- agent-source-only -->` 说明块仅存在于源文件，安装时丢弃。
+3. 未知 agent 没有对应 route 块时渲染失败，禁止静默产出缺失 review route 的规则。
+4. 渲染逻辑集中在 `lib/render-agents.sh`，claude/codex adapter 与 `tests/lint.sh` 共用同一实现。
+
+除占位符替换、route block 选择与 source-only 块丢弃外，adapter 不改写规则文本。
 
 ### 4.4 受管文件边界
 
@@ -89,6 +97,10 @@ adapter 在 `~/.codex/AGENTS.md` 中维护唯一 block：
 - 用户放在 `agent-rules/` 下但未写入 manifest 的文件必须保留。
 - 如果首次安装前 `agent-rules/` 已存在但没有 manifest，adapter 必须失败，避免接管来源不明的目录。
 - 空目录使用 `rmdir` 清理，不使用递归强制删除。
+
+### 4.5 全局 override 遮蔽
+
+Codex 在全局层级只读取第一个非空文件：`AGENTS.override.md` 非空时，受管的 `~/.codex/AGENTS.md` 不会加载。安装与 dry-run preflight 检测到非空 override 必须失败并说明原因；空 override 不遮蔽，允许安装。卸载不受此限制，仍只清理受管内容。
 
 ## 5. 加载模型
 
@@ -114,11 +126,12 @@ Codex 不依赖 Claude Code 的 `paths:` 自动加载机制。详细规则是否
 1. 校验 `REPO`、`CODEX_DIR` 和运行参数。
 2. 确认 `CODEX_DIR` 已存在。
 3. 校验现有 `AGENTS.md` marker 完整性和 manifest 路径安全性。
-4. 检查 `agent-rules/` namespace 是否存在未受管冲突。
-5. `--dry-run` 到此为止，只输出计划，不写文件。
-6. 同步仓库 `rules/` 与 `guides/` 到独立 namespace。
-7. 根据旧 manifest 清理 stale managed files，并原子更新 manifest。
-8. 渲染 Codex 路径并原子合并 `AGENTS.md` managed block。
+4. 校验非空 `AGENTS.override.md` 是否遮蔽受管文件。
+5. 检查 `agent-rules/` namespace 是否存在未受管冲突。
+6. `--dry-run` 到此为止，只输出计划，不写文件。
+7. 同步仓库 `rules/` 与 `guides/` 到独立 namespace。
+8. 根据旧 manifest 清理 stale managed files，并原子更新 manifest。
+9. 渲染 Codex 路径与 review route，并原子合并 `AGENTS.md` managed block。
 
 安装失败后不得静默绕过。输出必须说明失败对象和已知原因，用户可修复冲突后重复运行安装命令。
 
@@ -147,7 +160,7 @@ Codex 不依赖 Claude Code 的 `paths:` 自动加载机制。详细规则是否
 
 1. 首次安装能够同步 `rules/`、`guides/` 并创建 manifest。
 2. 原有 `AGENTS.md` 内容完整保留。
-3. 安装结果包含 Codex 路径，不再包含 `~/.claude/rules/` 或 `~/.claude/guides/`。
+3. 安装结果包含 Codex 路径，不再包含 `~/.claude/rules/` 或 `~/.claude/guides/`，也不包含 Claude 的 review route。
 4. 重复安装后 START/END marker 各只有一个。
 5. stale managed file 在重装时被删除。
 6. `~/.codex/rules/` 中模拟的 command rule 保持不变。
@@ -158,13 +171,18 @@ Codex 不依赖 Claude Code 的 `paths:` 自动加载机制。详细规则是否
 11. 非法 manifest 路径在任何写入或删除前失败。
 12. `--dry-run` 不产生任何写入。
 13. macOS 默认 Bash 3.2 兼容，`shellcheck` 和现有回归测试全部通过。
+14. 渲染结果无 `{{...}}` 占位符与 route/source-only marker 残留。
+15. 非空 `AGENTS.override.md` 时安装失败且不写入；空 override 允许安装。
 
 ## 10. 影响文件
 
 | 文件 | 变更 |
 |---|---|
+| `AGENTS.md` | 模板化：路径占位符 + 按 agent 的 review route 块 |
+| `lib/render-agents.sh` | 新增共享 AGENTS.md 渲染器 |
 | `adapters/codex.sh` | 新增 Codex 安装、更新、dry-run 和卸载实现 |
 | `tests/codex-install.sh` | 新增 Codex 生命周期回归测试 |
+| `tests/lint.sh` | 校验两种 agent 渲染结果 |
 | `.github/workflows/test.yml` | 将 Codex 测试纳入 CI |
 | `README.md` | 更新英文安装说明和加载机制 |
 | `README.zh.md` | 更新中文安装说明和加载机制 |
@@ -176,6 +194,8 @@ Codex 不依赖 Claude Code 的 `paths:` 自动加载机制。详细规则是否
 
 - 禁止直接覆盖用户的 `~/.codex/AGENTS.md`。
 - 禁止向 `~/.codex/rules/` 同步本仓库 Markdown rules。
+- 禁止在 `AGENTS.md` 中硬编码 `~/.claude/` 或 `~/.codex/` 路径。
+- 禁止在非空 `AGENTS.override.md` 遮蔽全局文件时静默安装。
 - 禁止在 marker 异常时尝试猜测或修复用户文件。
 - 禁止使用 `rm -rf` 清理 Codex 配置目录。
 - 禁止卸载未写入 manifest 的文件。

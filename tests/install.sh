@@ -42,6 +42,13 @@ assert_file_contains "$CLAUDE_DIR/CLAUDE.md" "@RTK.md"
 assert_file_contains "$CLAUDE_DIR/CLAUDE.md" "custom instruction"
 # AGENTS.md synced.
 assert_file_contains "$CLAUDE_DIR/AGENTS.md" "# Universal Hard Rules"
+grep -Fq '**Claude Code** → automatically invoke the native `/code-review`' "$CLAUDE_DIR/AGENTS.md" || fail 'Claude AGENTS.md missing its review route'
+grep -Fq '~/.claude/rules/go/' "$CLAUDE_DIR/AGENTS.md" || fail 'Claude AGENTS.md missing adapted rule paths'
+! grep -Fq '**Codex**' "$CLAUDE_DIR/AGENTS.md" || fail 'Claude AGENTS.md must not contain the Codex review route'
+! grep -Fq '{{' "$CLAUDE_DIR/AGENTS.md" || fail 'Claude AGENTS.md still contains placeholders'
+! grep -Fq '<!-- agent-route:' "$CLAUDE_DIR/AGENTS.md" || fail 'Claude AGENTS.md still contains route markers'
+mode="$(ls -l "$CLAUDE_DIR/AGENTS.md" | awk '{print substr($1,1,10)}')"
+[[ "$mode" == "-rw-r--r--" ]] || fail "Claude AGENTS.md must keep 0644 mode (got $mode)"
 # Legacy flat + rules/common/ + rules/github.md removed.
 assert_missing "$CLAUDE_DIR/rules/react.md"
 assert_missing "$CLAUDE_DIR/rules/common"

@@ -5,11 +5,13 @@ IFS=$'\n\t'
 : "${REPO:?REPO must be set by install.sh}"
 : "${DRY_RUN:=0}"
 : "${UNINSTALL:=0}"
+source "$REPO/lib/render-agents.sh"
 CODEX_DIR="${CODEX_DIR:-$HOME/.codex}"
 PAYLOAD_DIR="$CODEX_DIR/agent-rules"
 RULES_DIR="$PAYLOAD_DIR/rules"
 GUIDES_DIR="$PAYLOAD_DIR/guides"
 AGENTS_MD="$CODEX_DIR/AGENTS.md"
+OVERRIDE_MD="$CODEX_DIR/AGENTS.override.md"
 MANAGED="$CODEX_DIR/.agent-rules-managed"
 START_MARKER='<!-- AGENT_RULES_START -->'
 END_MARKER='<!-- AGENT_RULES_END -->'
@@ -65,6 +67,12 @@ validate_manifest() {
     [[ -z "$relative" ]] || validate_managed_path "$relative"
   done < "$MANAGED"
 }
+validate_override_shadow() {
+  if [[ -f "$OVERRIDE_MD" && -s "$OVERRIDE_MD" ]]; then
+    printf 'ERROR (codex): %s is non-empty and shadows %s — Codex would ignore the managed AGENTS.md. Remove or rename the override, or merge it into AGENTS.md, then re-run.\n' "$OVERRIDE_MD" "$AGENTS_MD" >&2
+    return 1
+  fi
+}
 write_managed() {
   MANAGED_TMP="$(mktemp "$CODEX_DIR/.agent-rules-managed.XXXXXX")"
   ( cd "$REPO" && find guides rules -type f -print ) | sort -u > "$MANAGED_TMP"
@@ -90,10 +98,7 @@ render_block() {
   {
     printf '%s\n' "$START_MARKER"
     printf '<!-- Managed by agent-rules/adapters/codex.sh. -->\n'
-    sed \
-      -e 's#~/.claude/rules/#~/.codex/agent-rules/rules/#g' \
-      -e 's#~/.claude/guides/#~/.codex/agent-rules/guides/#g' \
-      "$REPO/AGENTS.md"
+    render_agents_md codex '~/.codex/agent-rules/rules' '~/.codex/agent-rules/guides' "$REPO/AGENTS.md"
     printf '\n%s\n' "$END_MARKER"
   } > "$BLOCK_TMP"
 }
@@ -169,6 +174,7 @@ if [[ "$UNINSTALL" -eq 1 ]]; then
   printf '==> Codex: done.\n'
   exit 0
 fi
+validate_override_shadow
 if [[ -d "$PAYLOAD_DIR" && ! -f "$MANAGED" ]]; then
   printf 'ERROR (codex): %s exists without %s; refusing to take ownership\n' "$PAYLOAD_DIR" "$MANAGED" >&2
   exit 1
@@ -187,6 +193,9 @@ mkdir -p "$RULES_DIR" "$GUIDES_DIR"
 cp -R "$REPO/rules/." "$RULES_DIR/"
 cp -R "$REPO/guides/." "$GUIDES_DIR/"
 cleanup_stale
+if [[ -d "$PAYLOAD_DIR" ]]; then
+  find "$PAYLOAD_DIR" -depth -type d -exec rmdir {} \; 2>/dev/null || true
+fi
 write_managed
 printf '    synced rules/ + guides/\n'
 merge_agents

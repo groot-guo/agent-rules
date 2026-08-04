@@ -54,9 +54,9 @@ bash install.sh
 
 1. Detects installed coding agents (`~/.claude`, `~/.codex`, `~/.cursor`) and dispatches to each adapter. Use `--agent <name>` to force one.
 2. The Claude adapter backs up existing `~/.claude/rules/`, `~/.claude/guides/`, `CLAUDE.md`, and `AGENTS.md` → `~/.claude/.agent-rules-backup/` (first run only)
-3. The Claude adapter syncs detailed content into `~/.claude/{rules,guides}/`, syncs `AGENTS.md`, and adds `@AGENTS.md` to `CLAUDE.md` while preserving its other content
+3. The Claude adapter syncs detailed content into `~/.claude/{rules,guides}/`, syncs a Claude-rendered `AGENTS.md`, and adds `@AGENTS.md` to `CLAUDE.md` while preserving its other content
 4. The Codex adapter syncs detailed content into the isolated `~/.codex/agent-rules/{rules,guides}/` namespace; it does not write to Codex's own `~/.codex/rules/`
-5. The Codex adapter maintains one marked block in `~/.codex/AGENTS.md`, preserving all user content outside that block and adapting Claude-specific rule paths to the Codex namespace
+5. The Codex adapter maintains one marked block in `~/.codex/AGENTS.md`, preserving all user content outside that block and resolving path/review-route placeholders for the Codex namespace
 6. Both adapters remove only stale files from their managed manifests
 
 Idempotent — safe to re-run. Codex installation fails closed if its managed markers are malformed or its payload namespace already exists without a managed manifest.
@@ -75,7 +75,7 @@ bash tests/codex-install.sh   # Codex adapter lifecycle
 bash tests/lint.sh      # rule file structure + route-table references
 ```
 
-`tests/install.sh` uses an isolated temporary Claude directory and covers installation, legacy cleanup, stale managed-rule cleanup, and uninstall restoration. `tests/codex-install.sh` uses an isolated Codex directory and covers managed-block merging, path adaptation, namespace isolation, stale cleanup, dry-run, conflicts, and uninstall preservation. `tests/lint.sh` checks that every `rules/` file declares `paths:`, no `guides/` file does, and all source `AGENTS.md` route-table references resolve.
+`tests/install.sh` uses an isolated temporary Claude directory and covers installation, legacy cleanup, stale managed-rule cleanup, and uninstall restoration. `tests/codex-install.sh` uses an isolated Codex directory and covers managed-block merging, path adaptation, namespace isolation, stale cleanup, dry-run, conflicts, and uninstall preservation. `tests/lint.sh` checks that every `rules/` file declares `paths:`, no `guides/` file does, `AGENTS.md` uses resolvable placeholders, and both Claude and Codex rendered variants are placeholder-free with only their own review route.
 
 ## Out of scope (configure separately)
 
@@ -115,6 +115,8 @@ agent-rules/
 ├── adapters/
 │   ├── claude.sh        # Claude Code adapter
 │   └── codex.sh         # Codex adapter
+├── lib/
+│   └── render-agents.sh # shared AGENTS.md placeholder/route renderer
 ├── docs/
 │   └── codex-adapter-design.md
 ├── tests/
@@ -128,6 +130,8 @@ agent-rules/
 ## Loading mechanism
 
 - `AGENTS.md` — Claude loads the synced file through `~/.claude/CLAUDE.md` → `@AGENTS.md`; Codex loads a managed copy embedded in `~/.codex/AGENTS.md`. Contains the security red-line summary in §3.
+- The source `AGENTS.md` uses `{{RULES_DIR}}`/`{{GUIDES_DIR}}` path placeholders and per-agent review-route blocks; each adapter resolves them at install time (Claude → `~/.claude/{rules,guides}`, Codex → `~/.codex/agent-rules/{rules,guides}`).
+- Codex loads instructions in merge order: global `~/.codex/AGENTS.md` first, then project-root and nested `AGENTS.md` files; files closer to the working directory come later and take precedence. A non-empty `~/.codex/AGENTS.override.md` shadows the managed global file, so the adapter fails closed on install.
 - `rules/<lang>/*` + `rules/gopls-upstream.md` — Claude can auto-load them by file type via `paths:` frontmatter (L1). Codex proactively reads the adapted `~/.codex/agent-rules/rules/` paths through AGENTS.md §7.
 - `guides/*.md` — NOT auto-loaded; read on demand by scenario (L2, AGENTS.md §7/§8). Keeps context lean.
 

@@ -1,6 +1,9 @@
 # Universal Hard Rules
 
 > Loaded every session. All projects. Priority top to bottom.
+<!-- agent-source-only -->
+> `{{RULES_DIR}}` / `{{GUIDES_DIR}}` are resolved per agent at install time; when reading this source directly, treat them as `rules/` and `guides/`.
+<!-- /agent-source-only -->
 
 ## 1. Commit Gate
 
@@ -12,9 +15,13 @@ Commit rules:
 **Pre-commit self-check**: selected review passed or an exception is documented, blocking findings resolved, user agreed, message drafted, no secrets, no out-of-scope changes. Stop if any unmet.
 
 **Review route — choose one, do not stack reviewers**:
+<!-- agent-route:claude -->
 - **Claude Code** → automatically invoke the native `/code-review` action in the current session; effort=medium by default (<200 lines), high for refactors. No `--fix` by default. If it cannot be invoked, prompt the user to run it manually
+<!-- /agent-route:claude -->
+<!-- agent-route:codex -->
 - **Codex Desktop** → automatically invoke the native Review action for the current uncommitted workspace; opening a Review panel alone does not count as running review. If it cannot be invoked, prompt the user to trigger it manually
 - **Codex CLI** → automatically run `codex review --uncommitted`; use `--base <branch>` when the requested scope is a branch diff. If it fails, prompt the user to run it manually
+<!-- /agent-route:codex -->
 - **Unavailable native route** → tell the user to invoke the native Review action manually; do not perform a manual substitute or claim that review passed
 
 Codex `Auto-review` for sandbox approval requests is not code review and does not satisfy this gate.
@@ -93,16 +100,16 @@ Codex `Auto-review` for sandbox approval requests is not code review and does no
 
 | Trigger | Rule file |
 |---|---|
-| `*.go` / `go.mod` | `~/.claude/rules/go/` |
-| `*.py` / `pyproject.toml` | `~/.claude/rules/python/` |
-| `*.rs` / `Cargo.toml` | `~/.claude/rules/rust/` |
-| Writing SQL | `~/.claude/rules/sql/` |
-| `*.sh` / `*.bash` | `~/.claude/rules/shell/` |
-| `*.ts` / `*.tsx` / `*.js` / `*.jsx` | `~/.claude/rules/typescript/` |
-| `*.tsx` / `*.jsx` / React components / hooks | `~/.claude/rules/react/` |
-| `*.html` / `*.css` / `*.scss` / `*.less` / frontend | `~/.claude/rules/web/` |
-| `gopls/` paths / `go-review` CL | `~/.claude/rules/gopls-upstream.md` |
-| GitHub ops / `gh` / `go-review` | `~/.claude/guides/github.md` |
+| `*.go` / `go.mod` | `{{RULES_DIR}}/go/` |
+| `*.py` / `pyproject.toml` | `{{RULES_DIR}}/python/` |
+| `*.rs` / `Cargo.toml` | `{{RULES_DIR}}/rust/` |
+| Writing SQL | `{{RULES_DIR}}/sql/` |
+| `*.sh` / `*.bash` | `{{RULES_DIR}}/shell/` |
+| `*.ts` / `*.tsx` / `*.js` / `*.jsx` | `{{RULES_DIR}}/typescript/` |
+| `*.tsx` / `*.jsx` / React components / hooks | `{{RULES_DIR}}/react/` |
+| `*.html` / `*.css` / `*.scss` / `*.less` / frontend | `{{RULES_DIR}}/web/` |
+| `gopls/` paths / `go-review` CL | `{{RULES_DIR}}/gopls-upstream.md` |
+| GitHub ops / `gh` / `go-review` | `{{GUIDES_DIR}}/github.md` |
 
 ## 8. General Engineering Standards
 
@@ -110,9 +117,9 @@ Proactively Read by scenario:
 
 | Scenario | Rule file |
 |---|---|
-| New feature dev flow | `~/.claude/guides/dev-workflow.md` |
-| Writing tests | `~/.claude/guides/testing.md` |
-| Coding style | `~/.claude/guides/coding-style.md` |
-| Perf-related changes | `~/.claude/guides/performance.md` |
-| Security review / sensitive code | `~/.claude/guides/security.md` |
-| Design / architecture decisions | `~/.claude/guides/patterns.md` |
+| New feature dev flow | `{{GUIDES_DIR}}/dev-workflow.md` |
+| Writing tests | `{{GUIDES_DIR}}/testing.md` |
+| Coding style | `{{GUIDES_DIR}}/coding-style.md` |
+| Perf-related changes | `{{GUIDES_DIR}}/performance.md` |
+| Security review / sensitive code | `{{GUIDES_DIR}}/security.md` |
+| Design / architecture decisions | `{{GUIDES_DIR}}/patterns.md` |

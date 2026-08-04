@@ -23,6 +23,6 @@ jobs:
       - name: shellcheck
         run: |
           sudo apt-get update -qq && sudo apt-get install -qq shellcheck
-          shellcheck install.sh adapters/*.sh tests/*.sh
+          shellcheck install.sh adapters/*.sh lib/*.sh tests/*.sh
       - name: Rule file lint
         run: bash tests/lint.sh

@@ -73,5 +73,9 @@ for agent in "${agents[@]}"; do
   fi
 done
 
-printf '==> agent-rules: done. Restart your agent to load.\n'
+if [[ "$rc" -eq 0 ]]; then
+  printf '==> agent-rules: done. Restart your agent to load.\n'
+else
+  printf '==> agent-rules: completed with errors — see output above.\n' >&2
+fi
 exit "$rc"
