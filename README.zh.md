@@ -23,8 +23,8 @@
 
 ## 包含内容
 
-- `AGENTS.md` — 通用硬规则（提交门禁、安全红线、沟通规范、工程纪律）。每次会话自动加载。
-- `guides/` — 通用工程规范（开发流程、测试、编码风格、性能、安全、设计模式）及跨领域场景指南（如 GitHub 操作）。不自动加载；按场景按需 Read（AGENTS.md §7/§8）。
+- `AGENTS.md` — 精简的通用护栏（明确提交、安全、范围与沟通）。每次会话自动加载。
+- `guides/` — 通用工程指导（开发流程、测试、编码风格、性能、安全、设计模式）及跨领域场景指南（如 GitHub 操作）。按场景按需 Read，不构成自动门禁（AGENTS.md §7/§8）。
 - `rules/` — 语言 / 工具规则，按语言分目录，每个目录包含细分文件（coding-style、testing、patterns 等）。Claude Code 可通过 `paths:` frontmatter 按文件类型加载；Codex 通过安装到全局 `AGENTS.md` block 的路由表按需读取。
 - `install.sh` — 入口：检测已安装的 Coding Agent 并分发到对应适配器。
 - `adapters/` — 各 Agent 的安装器。`claude.sh` 和 `codex.sh` 已实现；Cursor 待实现。
@@ -56,7 +56,7 @@ bash install.sh
 2. Claude 适配器备份现有 `~/.claude/rules/`、`~/.claude/guides/`、`CLAUDE.md` 与 `AGENTS.md` → `~/.claude/.agent-rules-backup/`（仅首次运行）
 3. Claude 适配器将详细内容同步到 `~/.claude/{rules,guides}/`，同步按 Claude 渲染的 `AGENTS.md`，并在保留其他内容的前提下向 `CLAUDE.md` 添加 `@AGENTS.md`
 4. Codex 适配器将详细内容同步到隔离的 `~/.codex/agent-rules/{rules,guides}/`；不会写入 Codex 自身的 `~/.codex/rules/`
-5. Codex 适配器在 `~/.codex/AGENTS.md` 中维护唯一的 marker block，保留 block 外的全部用户内容，并按 Codex namespace 解析路径与 review route 占位符
+5. Codex 适配器在 `~/.codex/AGENTS.md` 中维护唯一的 marker block，保留 block 外的全部用户内容，并按 Codex namespace 解析路径与 review 建议占位符
 6. 两个适配器都只按各自 manifest 清理失效的受管文件
 
 幂等 —— 可安全重复运行。Codex managed marker 异常，或 payload namespace 已存在但没有 manifest 时，安装会安全失败而不接管现有内容。
@@ -130,10 +130,10 @@ agent-rules/
 ## 加载机制
 
 - `AGENTS.md` — Claude 通过 `~/.claude/CLAUDE.md` → `@AGENTS.md` 加载同步文件；Codex 从 `~/.codex/AGENTS.md` 中加载受管副本。§3 含安全红线摘要。
-- 源 `AGENTS.md` 使用 `{{RULES_DIR}}`/`{{GUIDES_DIR}}` 路径占位符和按 agent 标记的 review route 块；各适配器安装时解析（Claude → `~/.claude/{rules,guides}`，Codex → `~/.codex/agent-rules/{rules,guides}`）。
+- 源 `AGENTS.md` 使用 `{{RULES_DIR}}`/`{{GUIDES_DIR}}` 路径占位符和按 agent 标记的 review 建议块；各适配器安装时解析（Claude → `~/.claude/{rules,guides}`，Codex → `~/.codex/agent-rules/{rules,guides}`）。Review 为 opt-in：在代码提交前建议，但不自动启动。
 - Codex 按合并顺序加载指令：全局 `~/.codex/AGENTS.md` 最先，其次项目根与嵌套 `AGENTS.md`；越靠近当前目录的文件越靠后、优先级越高。非空 `~/.codex/AGENTS.override.md` 会遮蔽受管全局文件，因此 adapter 安装时 fail closed。
-- `rules/<lang>/*` + `rules/gopls-upstream.md` — Claude 可通过 `paths:` frontmatter 按文件类型自动加载（L1）；Codex 通过 AGENTS.md §7 主动读取适配后的 `~/.codex/agent-rules/rules/` 路径。
-- `guides/*.md` — 不自动加载；按场景按需 Read（L2，AGENTS.md §7/§8）。保持 context 精简。
+- `rules/<lang>/*` + `rules/gopls-upstream.md` — Claude 可通过 `paths:` frontmatter 按文件类型自动加载（L1）；Codex 通过 AGENTS.md §7 只读取当前任务相关的文件：编辑读 coding style，写测试读 testing，涉及架构或安全时才读 patterns/security。
+- `guides/*.md` — 按场景按需 Read（L2，AGENTS.md §7/§8），保持 context 精简。
 
 Codex adapter 的约束、合并算法、回滚边界和验收测试见 [`docs/codex-adapter-design.md`](./docs/codex-adapter-design.md)。
 

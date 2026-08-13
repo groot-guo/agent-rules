@@ -1,26 +1,28 @@
 # Testing Standards
 
-> Auto-loaded when writing tests. Language specifics in `rules/<lang>.md`.
+> Use when adding or changing tests. Language specifics are in `rules/<lang>/testing.md`.
 
 ## Coverage
 
-- Minimum 80%
-- New features must have tests
+- Add focused tests when behavior, core logic, or a regression risk changes.
+- Follow an existing repository coverage target when one exists; do not impose a universal 80% target.
 
-## Types (all required)
+## Choose the right level
 
 1. **Unit** — functions / utils / isolated logic
 2. **Integration** — API / DB / inter-module
 3. **E2E** — critical user flows
 
-## TDD
+Use the smallest level that proves the intended behavior. Add integration or E2E coverage when the change crosses that boundary or affects a critical flow.
+
+## TDD (optional)
 
 1. Write test (RED)
 2. Run — fails
 3. Minimal impl (GREEN)
 4. Run — passes
 5. Refactor (IMPROVE)
-6. Verify coverage
+6. Verify relevant coverage or behavior
 
 ## Structure — AAA
 

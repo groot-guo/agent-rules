@@ -1,6 +1,6 @@
 # Security Standards
 
-> Mandatory checks for all code changes. Language specifics in `rules/<lang>.md`.
+> Use for security-sensitive changes: authentication, authorization, external input, secrets, data access, file handling, or network boundaries. Language specifics are in `rules/<lang>/`.
 
 ## Secrets & Credentials
 

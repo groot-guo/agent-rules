@@ -1,38 +1,33 @@
 # Development Workflow
 
-> Auto-loaded for new feature work. Full flow from "before coding" to commit.
+> Use for substantial or unfamiliar feature work. Tailor it to the change; it is not an automatic gate.
 
-## 0. Research & Reuse (before any new code)
+## 0. Research & Reuse (when useful)
 
-Find existing solutions first:
+Check for existing solutions when the area is unfamiliar, a dependency is being added, or reuse can materially reduce risk:
 - **Code search**: `gh search code` / `gh search repos`
 - **Docs**: Context7 or official docs for API behavior, version details
 - **Registries**: npm / PyPI / crates.io / pkg.go.dev — prefer battle-tested libs over hand-rolled
 - **Adaptable impls**: find OSS solving 80%+ → fork / port / wrap
 
-Prefer porting a proven approach over writing net-new. Extends AGENTS.md §5 (deps check) to any new implementation.
+Prefer a proven approach when it fits the project's constraints; do not add external research for a small, well-understood change.
 
 ## 1. Plan First
 
-- Implementation plan before coding: breakdown, architecture, task list
-- Identify deps + risks
-- Long tasks → phases (AGENTS.md §5)
+- For multi-step or risky work: write a brief breakdown and identify material dependencies or risks.
+- Small, local changes can proceed directly.
 
-## 2. TDD
+## 2. Tests
 
-- RED → failing test
-- GREEN → minimal impl
-- IMPROVE → refactor
-- Verify ≥ 80%
+- Add or update focused tests for core logic, regression fixes, and changes with meaningful behavioral risk.
+- TDD is useful for complex algorithms and bug fixes, but is not required for every change.
+- Follow the repository's existing coverage target; do not introduce a universal percentage target.
 
-Not mandatory for everything, but required for core logic / complex algorithms / regression-prone code.
+## 3. Review (optional)
 
-## 3. Review
-
-- Use the single environment-native route selected by AGENTS.md §1
-- Do not run both Claude Code and Codex reviewers for the same gate
-- Fix CRITICAL/HIGH, then re-run the same route
-- See AGENTS.md §1 Commit Gate
+- Before a code commit, recommend one environment-native route from AGENTS.md §1.
+- Run it only when the user requests or accepts it; do not stack reviewers.
+- If run, fix CRITICAL/HIGH findings and re-run the same route.
 
 ## 4. Commit
 
@@ -41,6 +36,5 @@ Not mandatory for everything, but required for core logic / complex algorithms /
 
 ## 5. Pre-Commit Checks
 
-- CI / lint / test green
-- No merge conflicts
-- Branch up to date
+- Run the checks that are relevant and available for the changed scope.
+- Check for merge conflicts when preparing a commit.

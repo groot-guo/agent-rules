@@ -5,42 +5,22 @@
 > `{{RULES_DIR}}` / `{{GUIDES_DIR}}` are resolved per agent at install time; when reading this source directly, treat them as `rules/` and `guides/`.
 <!-- /agent-source-only -->
 
-## 1. Commit Gate
+## 1. Commit & Review
 
-Commit rules:
-1. Never commit proactively. Only on explicit "提交/commit/推一下"; "完成了/OK" is not an instruction — report and wait
-2. Before committing code changes, including refactors and tests, run exactly one environment-native review route
-3. Fix CRITICAL/HIGH findings, then **re-run the same route** until no blocking findings remain
+- Never commit proactively. Only commit on explicit "提交/commit/推一下"; "完成了/OK" is not an instruction.
+- Before a code commit, recommend one environment-native review route. Review is opt-in: do not start it automatically, and do not block a commit when the user declines or does not request it.
+- If a review is run, fix CRITICAL/HIGH findings and re-run the same route before committing. MEDIUM/LOW findings are reported but do not block unless the user requests a stricter gate.
 
-**Pre-commit self-check**: selected review passed or an exception is documented, blocking findings resolved, user agreed, message drafted, no secrets, no out-of-scope changes. Stop if any unmet.
-
-**Review route — choose one, do not stack reviewers**:
+**Suggested review route — choose one, do not stack reviewers**:
 <!-- agent-route:claude -->
-- **Claude Code** → automatically invoke the native `/code-review` action in the current session; effort=medium by default (<200 lines), high for refactors. No `--fix` by default. If it cannot be invoked, prompt the user to run it manually
+- **Claude Code** → suggest the native `/code-review` action; use it only when the user requests or accepts review. Use medium effort by default (<200 lines), high for refactors. No `--fix` by default.
 <!-- /agent-route:claude -->
 <!-- agent-route:codex -->
-- **Codex Desktop** → automatically invoke the native Review action for the current uncommitted workspace; opening a Review panel alone does not count as running review. If it cannot be invoked, prompt the user to trigger it manually
-- **Codex CLI** → automatically run `codex review --uncommitted`; use `--base <branch>` when the requested scope is a branch diff. If it fails, prompt the user to run it manually
+- **Codex Desktop** → suggest the native Review action for the uncommitted workspace; use it only when the user requests or accepts review.
+- **Codex CLI** → suggest `codex review --uncommitted`; use `--base <branch>` for a branch diff.
 <!-- /agent-route:codex -->
-- **Unavailable native route** → tell the user to invoke the native Review action manually; do not perform a manual substitute or claim that review passed
 
-Codex `Auto-review` for sandbox approval requests is not code review and does not satisfy this gate.
-
-**Severity mapping**: Codex P0/P1 correspond to blocking CRITICAL/HIGH findings; P2/P3 correspond to non-blocking MEDIUM/LOW findings. For other reviewers, classify by equivalent impact.
-
-**Non-blocking findings**: MEDIUM/LOW are reported but do not prevent commit unless the user asks for a stricter gate.
-
-**Exceptions (skip review only, NOT skip "no proactive commit")**: pure docs/config literals; user says "skip review" (note risk). If the native Review action is unavailable, inform the user and ask for manual invocation; do not claim that review passed.
-
-### Code Review Workflow
-
-- When a task modifies code or configuration, the agent must automatically attempt the native Review action after implementation and before final handoff or commit readiness. If execution fails or the active surface exposes only a Review panel, prompt the user to invoke the native Review manually. Do not execute a substitute or claim that review passed before a native Review result is available.
-- Review scope always includes staged, unstaged, and untracked files. Enumerate all three before reviewing, and do not silently omit an untracked file. `codex review --uncommitted` covers this complete scope; if the selected native operation cannot, stop and ask the user to invoke it manually.
-- The review phase is read-only: do not modify files, apply fixes, stage or unstage changes, commit, or push. Report the selected route and any unavailable condition explicitly.
-- Report only issues introduced by the current changes that are reproducible and actionable. Do not report pre-existing problems or speculative concerns; each finding should include enough evidence and a concrete next action.
-- Use normal Markdown for the review summary. When a finding needs a code location, use `::code-comment` with the file and line information rather than inventing another annotation format.
-- CRITICAL/HIGH findings block commit and must be fixed. MEDIUM/LOW findings are reported by default but do not block commit unless the user requests a stricter gate.
-- After fixing any CRITICAL/HIGH finding from a native Review, ask the user to invoke the same native review route again until no blocking findings remain.
+If review is unavailable, say so; do not claim it passed. A review covers staged, unstaged, and untracked changes, is read-only, and reports only reproducible issues introduced by the current changes. Codex `Auto-review` for sandbox approval is not code review.
 
 ## 2. Tool Selection
 
@@ -48,7 +28,7 @@ Codex `Auto-review` for sandbox approval requests is not code review and does no
 - Use `rg` and direct reads for exact text, known files, docs/config, and narrow single-file work
 - For unfamiliar cross-file flows or change-impact analysis, use an available semantic/index tool when configured; otherwise fall back to `rg` and direct reads
 - If an optional tool errors or returns insufficient results, fall back without blind retries or changing its installation/index state
-- Terminal via RTK (hook auto-rewrites); Read not cat; no `find . -name` for symbols
+- Prefer configured fast, narrow tools (for example `rg`); use RTK where it is available
 - "How does X work" → inspect the smallest relevant source or configured relationship tool. No sub-agents or grep+read piles
 
 ## 3. Security Red Line
@@ -56,11 +36,11 @@ Codex `Auto-review` for sandbox approval requests is not code review and does no
 **Dangerous ops need explicit user consent**:
 - `git push -f` / `reset --hard` / `branch -D` / `clean -f`
 - `rm -rf` any dir
-- Move/rename/delete files or dirs (incl. config, rules)
+- Move/rename/delete user-owned files or directories when the target or impact is unclear
 - Modify uncertain system behavior without verification
 - SQL `DROP`/`TRUNCATE`/`DELETE/UPDATE` without WHERE
 - Change CI/CD / deploy scripts
-- Operate outside current cwd
+- Operate outside the user-provided scope
 - Install/uninstall system software
 - Unsure? Treat as dangerous
 
@@ -73,11 +53,11 @@ Codex `Auto-review` for sandbox approval requests is not code review and does no
 - **Chinese** by default; technical terms in English
 - Concise; no empty "以上完成了 XXX" summaries
 - Code refs as `file_path:line`
-- One sentence on intent before tool calls; report blockers immediately
+- State material assumptions and blockers concisely
 - No speculation — check logs/run commands first
 - Mark unverifiable as "未验证"
-- **State stance before acting**: ambiguous requirements → list interpretations for user to choose; don't default and run. Unsure details → stop and ask
-- **Suggest simpler alternatives**: when the user's approach can be simpler, state it first then ask; don't execute the complex version literally
+- Ask before acting only when a choice materially changes scope, cost, safety, or an irreversible outcome. Otherwise make the smallest safe assumption and state it when useful.
+- Suggest a simpler alternative when it materially reduces risk or effort; proceed with the user's explicit approach otherwise.
 
 ## 5. Engineering Discipline
 
@@ -85,35 +65,36 @@ Codex `Auto-review` for sandbox approval requests is not code review and does no
 - No comments by default; if writing, why not what; no task-pointing comments
 - Don't delete/modify user's existing tests; test fails → judge if real bug first; don't fix tests to pass
 - New dependency → check existing deps for equivalents first; inform if added
-- One thing at a time; no opportunistic "also necessary" tasks; ask first
-- Long tasks → report plan / step first
+- Do not make unrelated changes. Mention adjacent work separately rather than including it.
+- For multi-step or high-risk work, state a short plan before acting.
 
 ## 6. Failure Handling
 
-- Command failed → read error; no retry of the same command
+- Command failed → read the error before retrying. Retry only when new information or a transient cause justifies it.
 - No root cause → tell user what's known + puzzling; no blind workaround
 - Hook/skill error → report; don't swallow
 
 ## 7. Language Rules Index
 
-**Proactively Read** when the file type is detected:
+Read only the relevant file for the work being done; do not load an entire language directory by default:
 
 | Trigger | Rule file |
 |---|---|
-| `*.go` / `go.mod` | `{{RULES_DIR}}/go/` |
-| `*.py` / `pyproject.toml` | `{{RULES_DIR}}/python/` |
-| `*.rs` / `Cargo.toml` | `{{RULES_DIR}}/rust/` |
-| Writing SQL | `{{RULES_DIR}}/sql/` |
-| `*.sh` / `*.bash` | `{{RULES_DIR}}/shell/` |
-| `*.ts` / `*.tsx` / `*.js` / `*.jsx` | `{{RULES_DIR}}/typescript/` |
-| `*.tsx` / `*.jsx` / React components / hooks | `{{RULES_DIR}}/react/` |
-| `*.html` / `*.css` / `*.scss` / `*.less` / frontend | `{{RULES_DIR}}/web/` |
+| Editing Go | `{{RULES_DIR}}/go/coding-style.md` |
+| Editing Python | `{{RULES_DIR}}/python/coding-style.md` |
+| Editing Rust | `{{RULES_DIR}}/rust/coding-style.md` |
+| Writing SQL | `{{RULES_DIR}}/sql/coding-style.md` |
+| Editing Shell | `{{RULES_DIR}}/shell/coding-style.md` |
+| Editing TypeScript / JavaScript | `{{RULES_DIR}}/typescript/coding-style.md` |
+| Editing React | `{{RULES_DIR}}/react/coding-style.md` (and TypeScript above, when applicable) |
+| Editing HTML / CSS / frontend | `{{RULES_DIR}}/web/coding-style.md` |
+| Writing tests or addressing an architecture, concurrency, or security concern | Read that language's matching `testing.md`, `patterns.md`, or `security.md` only if present |
 | `gopls/` paths / `go-review` CL | `{{RULES_DIR}}/gopls-upstream.md` |
 | GitHub ops / `gh` / `go-review` | `{{GUIDES_DIR}}/github.md` |
 
 ## 8. General Engineering Standards
 
-Proactively Read by scenario:
+Read on demand for the stated scenario; these are guidance, not automatic gates:
 
 | Scenario | Rule file |
 |---|---|

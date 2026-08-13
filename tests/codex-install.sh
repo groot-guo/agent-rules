@@ -38,7 +38,7 @@ assert_contains "$CODEX_DIR/AGENTS.md" "${LITERAL_TILDE}/.codex/agent-rules/rule
 assert_exists "$CODEX_DIR/agent-rules/rules/go/coding-style.md"
 assert_contains "$CODEX_DIR/.agent-rules-managed" 'rules/go/coding-style.md'
 assert_contains "$CODEX_DIR/rules/default.rules" 'prefix_rule'
-assert_contains "$CODEX_DIR/AGENTS.md" '**Codex CLI** → automatically run `codex review --uncommitted`'
+assert_contains "$CODEX_DIR/AGENTS.md" '**Codex CLI** → suggest `codex review --uncommitted`'
 ! grep -Fq '**Claude Code**' "$CODEX_DIR/AGENTS.md" || fail 'Codex AGENTS.md must not contain the Claude review route'
 ! grep -Fq '{{' "$CODEX_DIR/AGENTS.md" || fail 'Codex AGENTS.md still contains placeholders'
 ! grep -Fq '<!-- agent-route:' "$CODEX_DIR/AGENTS.md" || fail 'Codex AGENTS.md still contains route markers'

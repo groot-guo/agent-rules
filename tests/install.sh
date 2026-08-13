@@ -42,7 +42,7 @@ assert_file_contains "$CLAUDE_DIR/CLAUDE.md" "@RTK.md"
 assert_file_contains "$CLAUDE_DIR/CLAUDE.md" "custom instruction"
 # AGENTS.md synced.
 assert_file_contains "$CLAUDE_DIR/AGENTS.md" "# Universal Hard Rules"
-grep -Fq '**Claude Code** → automatically invoke the native `/code-review`' "$CLAUDE_DIR/AGENTS.md" || fail 'Claude AGENTS.md missing its review route'
+grep -Fq '**Claude Code** → suggest the native `/code-review` action' "$CLAUDE_DIR/AGENTS.md" || fail 'Claude AGENTS.md missing its review suggestion'
 grep -Fq '~/.claude/rules/go/' "$CLAUDE_DIR/AGENTS.md" || fail 'Claude AGENTS.md missing adapted rule paths'
 ! grep -Fq '**Codex**' "$CLAUDE_DIR/AGENTS.md" || fail 'Claude AGENTS.md must not contain the Codex review route'
 ! grep -Fq '{{' "$CLAUDE_DIR/AGENTS.md" || fail 'Claude AGENTS.md still contains placeholders'

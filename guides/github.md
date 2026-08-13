@@ -1,6 +1,6 @@
 # GitHub / External Platform Rules
 
-> Auto-loaded for GitHub PR/issue ops, `gh` commands, or web content fetching.
+> Use for GitHub PR/issue operations, `gh` commands, or web content fetching.
 > Cross-project, language-agnostic.
 
 ## 1. API First, Don't Scrape JS Pages

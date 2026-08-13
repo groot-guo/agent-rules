@@ -1,6 +1,6 @@
 # Performance Standards
 
-> Auto-loaded for perf-related changes. Language specifics in `rules/<lang>.md`.
+> Use for performance-sensitive changes or a reported performance issue. Language specifics are in `rules/<lang>/`.
 
 ## General
 
