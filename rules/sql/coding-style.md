@@ -76,11 +76,21 @@ migrations/
 ### Naming
 
 - Tables: `snake_case`, singular (`user` per team convention)
-- PK: `id` (bigint/uuid)
-- FK: `<ref_table>_id` (`user_id`)
+- Primary key: `id` (bigint/uuid)
+- Relation field: `<ref_table>_id` (`user_id`), with the same type as the referenced primary key
 - Index: `idx_<table>_<cols>`
 - Unique: `uniq_<table>_<cols>`
 - Timestamps: `created_at`/`updated_at`/`deleted_at` (soft delete)
+
+### Names and comments
+
+- Avoid generic or reserved/conflicting names (for example `status`, `type`, `order`, `group`, `user`, `key`); qualify business fields, for example `order_status`.
+- New tables and columns require a database `COMMENT` with their business meaning.
+
+### Relationships: primary keys only
+
+- Use primary keys only; do not define database foreign keys (`FOREIGN KEY`, `REFERENCES`, or foreign-key `CONSTRAINT`).
+- Model relationships with `<ref_table>_id`, validate them in application logic, and index the field when needed.
 
 ## DML
 
@@ -126,6 +136,8 @@ INSERT INTO logs (level, msg) VALUES
 - [ ] Writes in a transaction?
 - [ ] UPDATE/DELETE have WHERE?
 - [ ] DDL has a down migration?
+- [ ] Relationships use `<ref_table>_id`; no database foreign key?
+- [ ] Tables and new columns have `COMMENT`s; business fields are qualified?
 - [ ] No string concat (parameterized)?
 
 ## Forbidden
@@ -135,5 +147,7 @@ INSERT INTO logs (level, msg) VALUES
 - `OFFSET` for deep pagination
 - Prod `DROP TABLE`/`TRUNCATE` without notice
 - UPDATE/DELETE without WHERE
+- Database foreign keys (`FOREIGN KEY`, `REFERENCES`, foreign-key `CONSTRAINT`)
+- Generic/reserved names or missing `COMMENT`s on new tables and columns
 - `SELECT ... FOR UPDATE` on hot path without timeout
 - Implicit type conversion (`WHERE id = '123'`)
